@@ -92,6 +92,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <span>Tasks</span>
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/activity-log"
+                  className={`sidebar-link ${isActive("/activity-log") ? "sidebar-link-active" : ""}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span>Activity Log</span>
+                </Link>
+              </li>
             </ul>
           </nav>
         </div>

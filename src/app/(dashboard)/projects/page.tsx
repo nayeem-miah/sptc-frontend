@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import ProjectTable from "@/components/ProjectTable";
 import CreateProjectModal from "@/components/CreateProjectModal";
 import { Project, Task } from "@/types";
+import { logActivity } from "@/utils/activityLogger";
 
 const DEFAULT_PROJECTS: Project[] = [
   { id: "proj-1", name: "Website Redesign", description: "Revamp corporate landing page", deadline: "2026-06-25", status: "Active" },
@@ -58,6 +59,9 @@ export default function ProjectsPage() {
     const updatedProjects = [...projects, newProject];
     setProjects(updatedProjects);
     localStorage.setItem("sptc-projects", JSON.stringify(updatedProjects));
+    
+    // Log creation event
+    logActivity(`Project "${projectData.name}" was created by ${user.name.split(" ")[0]}.`);
 
     setValidationError("");
     setIsProjectModalOpen(false);
@@ -65,6 +69,7 @@ export default function ProjectsPage() {
 
   const handleDeleteProject = (id: string) => {
     if (!canDeleteProjects) return;
+    const projectToDelete = projects.find((p) => p.id === id);
     const updatedProjects = projects.filter((p) => p.id !== id);
     const updatedTasks = tasks.filter((t) => t.projectId !== id); // clean tasks
 
@@ -72,6 +77,11 @@ export default function ProjectsPage() {
     setTasks(updatedTasks);
     localStorage.setItem("sptc-projects", JSON.stringify(updatedProjects));
     localStorage.setItem("sptc-tasks", JSON.stringify(updatedTasks));
+
+    // Log deletion event
+    if (projectToDelete) {
+      logActivity(`Project "${projectToDelete.name}" was deleted by ${user.name.split(" ")[0]}.`);
+    }
   };
 
   return (

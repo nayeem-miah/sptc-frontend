@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import TaskTable from "@/components/TaskTable";
 import CreateTaskModal from "@/components/CreateTaskModal";
 import { Project, Task } from "@/types";
+import { logActivity } from "@/utils/activityLogger";
 
 const DEFAULT_PROJECTS: Project[] = [
   { id: "proj-1", name: "Website Redesign", description: "Revamp corporate landing page", deadline: "2026-06-25", status: "Active" },
@@ -113,6 +114,16 @@ export default function TasksPage() {
       });
       setTasks(updatedTasks);
       localStorage.setItem("sptc-tasks", JSON.stringify(updatedTasks));
+
+      // Log update detail
+      if (editingTask.status !== taskData.status) {
+        logActivity(`Task "${taskData.title}" status was marked as "${taskData.status}" by ${user.name.split(" ")[0]}.`);
+      } else if (editingTask.assignedTo !== taskData.assignedTo) {
+        const shortEmail = taskData.assignedTo.split("@")[0];
+        logActivity(`Task "${taskData.title}" was reassigned to ${shortEmail} by ${user.name.split(" ")[0]}.`);
+      } else {
+        logActivity(`Task "${taskData.title}" details were updated by ${user.name.split(" ")[0]}.`);
+      }
     } else {
       // Create
       const newTask: Task = {
@@ -123,6 +134,10 @@ export default function TasksPage() {
       const updatedTasks = [...tasks, newTask];
       setTasks(updatedTasks);
       localStorage.setItem("sptc-tasks", JSON.stringify(updatedTasks));
+
+      // Log creation
+      const shortEmail = taskData.assignedTo.split("@")[0];
+      logActivity(`Task "${taskData.title}" was created and assigned to ${shortEmail} by ${user.name.split(" ")[0]}.`);
     }
 
     setIsTaskModalOpen(false);
@@ -131,9 +146,14 @@ export default function TasksPage() {
 
   const handleDeleteTask = (id: string) => {
     if (!canManageTasks) return;
+    const taskToDelete = tasks.find((t) => t.id === id);
     const updatedTasks = tasks.filter((t) => t.id !== id);
     setTasks(updatedTasks);
     localStorage.setItem("sptc-tasks", JSON.stringify(updatedTasks));
+
+    if (taskToDelete) {
+      logActivity(`Task "${taskToDelete.title}" was deleted by ${user.name.split(" ")[0]}.`);
+    }
   };
 
   const handleQuickStatusChange = (task: Task, newStatus: "Todo" | "In Progress" | "Completed") => {
@@ -147,6 +167,8 @@ export default function TasksPage() {
     });
     setTasks(updatedTasks);
     localStorage.setItem("sptc-tasks", JSON.stringify(updatedTasks));
+
+    logActivity(`Task "${task.title}" status was updated to "${newStatus}" by ${user.name.split(" ")[0]}.`);
   };
 
   return (
