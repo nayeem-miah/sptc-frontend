@@ -6,6 +6,12 @@ import DashboardMetrics from "@/components/DashboardMetrics";
 import WorkloadSummary from "@/components/WorkloadSummary";
 import { Project, Task } from "@/types";
 import { Activity } from "@/utils/activityLogger";
+import { useGetProjectsQuery, mapBackendProjectStatusToFrontend } from "@/redux/api/projectApi";
+import {
+  useGetTasksQuery,
+  mapBackendTaskStatusToFrontend,
+  mapBackendTaskPriorityToFrontend
+} from "@/redux/api/taskApi";
 
 const DEFAULT_ACTIVITIES: Activity[] = [
   { id: "act-1", time: "10:00 AM", message: 'Project "E-Commerce App" created' },
@@ -13,41 +19,66 @@ const DEFAULT_ACTIVITIES: Activity[] = [
   { id: "act-3", time: "10:30 AM", message: 'Task "Homepage Design" marked as Completed' }
 ];
 
-const DEFAULT_PROJECTS: Project[] = [
-  { id: "proj-1", name: "Website Redesign", description: "Revamp corporate landing page", deadline: "2026-06-25", status: "Active" },
-  { id: "proj-2", name: "Mobile App Development", description: "Build iOS/Android task companion", deadline: "2026-06-30", status: "Active" },
-  { id: "proj-3", name: "Admin Portal Panel", description: "Metrics dashboard layout integration", deadline: "2026-06-08", status: "On Hold" }
-];
-
-const DEFAULT_TASKS: Task[] = [
-  { id: "task-1", title: "Setup API Gateway", description: "Proxy requests to serverless backends", projectId: "proj-1", assignedTo: "member@sptc.com", dueDate: "2026-06-15", priority: "High", status: "In Progress", createdAt: "2026-06-01T10:00:00.000Z" },
-  { id: "task-2", title: "Homepage Layout Figma", description: "Design low fidelity wireframes", projectId: "proj-1", assignedTo: "member@sptc.com", dueDate: "2026-06-18", priority: "Medium", status: "Completed", createdAt: "2026-06-01T10:15:00.000Z" },
-  { id: "task-3", title: "Database Schema Setup", description: "Configure relations and tables", projectId: "proj-2", assignedTo: "manager@sptc.com", dueDate: "2026-06-20", priority: "High", status: "Todo", createdAt: "2026-06-01T10:30:00.000Z" },
-  { id: "task-4", title: "Auth Frontend Component", description: "Setup login screens and validations", projectId: "proj-2", assignedTo: "admin@sptc.com", dueDate: "2026-06-12", priority: "High", status: "Todo", createdAt: "2026-06-01T11:00:00.000Z" }
-];
-
 export default function Home() {
-  const { user } = useAuth();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const { user, users } = useAuth();
   const [activities, setActivities] = useState<Activity[]>([]);
 
   const todayDateString = new Date().toISOString().split("T")[0];
 
+  // Fetch projects and tasks from the live backend
+  const { data: projectsResponse, isLoading: projectsLoading } = useGetProjectsQuery(undefined);
+  const { data: tasksResponse, isLoading: tasksLoading } = useGetTasksQuery(undefined);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const storedProjects = localStorage.getItem("sptc-projects");
-      setProjects(storedProjects ? JSON.parse(storedProjects) : DEFAULT_PROJECTS);
-
-      const storedTasks = localStorage.getItem("sptc-tasks");
-      setTasks(storedTasks ? JSON.parse(storedTasks) : DEFAULT_TASKS);
-
       const storedLogs = localStorage.getItem("sptc-activity-log");
       setActivities(storedLogs ? JSON.parse(storedLogs) : DEFAULT_ACTIVITIES);
     }
   }, []);
 
   if (!user) return null;
+
+  if (projectsLoading || tasksLoading) {
+    return (
+      <div className="loader-container">
+        <div className="loader-spinner"></div>
+      </div>
+    );
+  }
+
+  // Convert backend projects array to frontend format
+  const backendProjectsList = projectsResponse?.data?.data || [];
+  const projects: Project[] = backendProjectsList.map((p: any) => ({
+    id: p.id,
+    name: p.name,
+    description: p.description || "",
+    deadline: p.deadline ? p.deadline.split("T")[0] : "",
+    status: mapBackendProjectStatusToFrontend(p.status),
+  }));
+
+  // Convert backend tasks array to frontend format
+  const backendTasksList = tasksResponse?.data?.data || [];
+  const tasks: Task[] = backendTasksList.map((t: any) => {
+    let email = t.assignedTo || "";
+    if (t.assignedMember?.email) {
+      email = t.assignedMember.email;
+    } else if (t.assignedMemberId) {
+      const matched = users.find((u) => u.id === t.assignedMemberId);
+      if (matched) email = matched.email;
+    }
+
+    return {
+      id: t.id,
+      title: t.title,
+      description: t.description || "",
+      projectId: t.projectId || "",
+      assignedTo: email,
+      dueDate: t.dueDate ? t.dueDate.split("T")[0] : "",
+      priority: mapBackendTaskPriorityToFrontend(t.priority),
+      status: mapBackendTaskStatusToFrontend(t.status),
+      createdAt: t.createdAt || new Date().toISOString()
+    };
+  });
 
   // Stats Calculations
   const displayTasks = user.role === "Team Member" ? tasks.filter((t) => t.assignedTo === user.email) : tasks;

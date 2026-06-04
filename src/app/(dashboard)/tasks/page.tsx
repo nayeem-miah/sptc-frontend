@@ -1,27 +1,26 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 
 import TaskTable from "@/components/TaskTable";
 import CreateTaskModal from "@/components/CreateTaskModal";
-import { Project, Task } from "@/types";
+import { Project, Task, User } from "@/types";
 import { logActivity } from "@/utils/activityLogger";
-
-const DEFAULT_PROJECTS: Project[] = [
-  { id: "proj-1", name: "Website Redesign", description: "Revamp corporate landing page", deadline: "2026-06-25", status: "Active" },
-  { id: "proj-2", name: "Mobile App Development", description: "Build iOS/Android task companion", deadline: "2026-06-30", status: "Active" }
-];
-
-const DEFAULT_TASKS: Task[] = [
-  { id: "task-1", title: "Setup API Gateway", description: "Proxy requests to serverless backends", projectId: "proj-1", assignedTo: "member@sptc.com", dueDate: "2026-06-15", priority: "High", status: "In Progress", createdAt: "2026-06-01T10:00:00.000Z" },
-  { id: "task-2", title: "Homepage Layout Figma", description: "Design low fidelity wireframes", projectId: "proj-1", assignedTo: "member@sptc.com", dueDate: "2026-06-18", priority: "Medium", status: "Completed", createdAt: "2026-06-01T10:15:00.000Z" }
-];
+import {
+  useGetTasksQuery,
+  useCreateTaskMutation,
+  useUpdateTaskMutation,
+  useDeleteTaskMutation,
+  mapBackendTaskStatusToFrontend,
+  mapFrontendTaskStatusToBackend,
+  mapBackendTaskPriorityToFrontend,
+  mapFrontendTaskPriorityToBackend
+} from "@/redux/api/taskApi";
+import { useGetProjectsQuery, mapBackendProjectStatusToFrontend } from "@/redux/api/projectApi";
 
 export default function TasksPage() {
-  const { user } = useAuth();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const { user, users } = useAuth();
   
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -29,15 +28,13 @@ export default function TasksPage() {
 
   const todayDateString = new Date().toISOString().split("T")[0];
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedProjects = localStorage.getItem("sptc-projects");
-      setProjects(storedProjects ? JSON.parse(storedProjects) : DEFAULT_PROJECTS);
+  // Fetch projects and tasks from the live backend
+  const { data: projectsResponse, isLoading: projectsLoading, error: projectsError } = useGetProjectsQuery(undefined);
+  const { data: tasksResponse, isLoading: tasksLoading, error: tasksError } = useGetTasksQuery(undefined);
 
-      const storedTasks = localStorage.getItem("sptc-tasks");
-      setTasks(storedTasks ? JSON.parse(storedTasks) : DEFAULT_TASKS);
-    }
-  }, []);
+  const [createTask, { isLoading: isCreating }] = useCreateTaskMutation();
+  const [updateTask, { isLoading: isUpdating }] = useUpdateTaskMutation();
+  const [deleteTask, { isLoading: isDeleting }] = useDeleteTaskMutation();
 
   if (!user) return null;
 
@@ -55,6 +52,40 @@ export default function TasksPage() {
     return checkDate < today;
   };
 
+  // Convert backend projects array to frontend format
+  const backendProjects = projectsResponse?.data?.data || [];
+  const projects: Project[] = backendProjects.map((p: any) => ({
+    id: p.id,
+    name: p.name,
+    description: p.description || "",
+    deadline: p.deadline ? p.deadline.split("T")[0] : "",
+    status: mapBackendProjectStatusToFrontend(p.status),
+  }));
+
+  // Convert backend tasks array to frontend format
+  const backendTasks = tasksResponse?.data?.data || [];
+  const tasks: Task[] = backendTasks.map((t: any) => {
+    let email = t.assignedTo || "";
+    if (t.assignedMember?.email) {
+      email = t.assignedMember.email;
+    } else if (t.assignedMemberId) {
+      const matched = users.find((u) => u.id === t.assignedMemberId);
+      if (matched) email = matched.email;
+    }
+
+    return {
+      id: t.id,
+      title: t.title,
+      description: t.description || "",
+      projectId: t.projectId || "",
+      assignedTo: email,
+      dueDate: t.dueDate ? t.dueDate.split("T")[0] : "",
+      priority: mapBackendTaskPriorityToFrontend(t.priority),
+      status: mapBackendTaskStatusToFrontend(t.status),
+      createdAt: t.createdAt || new Date().toISOString()
+    };
+  });
+
   // -- CRUD Operations: Tasks --
   const handleOpenCreateTask = () => {
     setEditingTask(null);
@@ -68,7 +99,7 @@ export default function TasksPage() {
     setIsTaskModalOpen(true);
   };
 
-  const handleSaveTask = (taskData: {
+  const handleSaveTask = async (taskData: {
     title: string;
     description: string;
     projectId: string;
@@ -101,75 +132,97 @@ export default function TasksPage() {
       return;
     }
 
-    if (editingTask) {
-      // Edit
-      const updatedTasks = tasks.map((t) => {
-        if (t.id === editingTask.id) {
-          return {
-            ...t,
-            ...taskData
-          };
+    // Lookup assignee ID from email
+    const matchedUser = users.find((u) => u.email === taskData.assignedTo);
+    const assignedMemberId = matchedUser ? matchedUser.id : "";
+
+    try {
+      if (editingTask) {
+        // Edit Task API call
+        await updateTask({
+          taskId: editingTask.id,
+          taskData: {
+            title: taskData.title,
+            description: taskData.description,
+            dueDate: new Date(taskData.dueDate).toISOString(),
+            priority: mapFrontendTaskPriorityToBackend(taskData.priority),
+            status: mapFrontendTaskStatusToBackend(taskData.status),
+            projectId: taskData.projectId,
+            assignedMemberId: assignedMemberId
+          }
+        }).unwrap();
+
+        // Log update detail
+        if (editingTask.status !== taskData.status) {
+          logActivity(`Task "${taskData.title}" status was marked as "${taskData.status}" by ${user.name.split(" ")[0]}.`);
+        } else if (editingTask.assignedTo !== taskData.assignedTo) {
+          const shortEmail = taskData.assignedTo.split("@")[0];
+          logActivity(`Task "${taskData.title}" was reassigned to ${shortEmail} by ${user.name.split(" ")[0]}.`);
+        } else {
+          logActivity(`Task "${taskData.title}" details were updated by ${user.name.split(" ")[0]}.`);
         }
-        return t;
-      });
-      setTasks(updatedTasks);
-      localStorage.setItem("sptc-tasks", JSON.stringify(updatedTasks));
-
-      // Log update detail
-      if (editingTask.status !== taskData.status) {
-        logActivity(`Task "${taskData.title}" status was marked as "${taskData.status}" by ${user.name.split(" ")[0]}.`);
-      } else if (editingTask.assignedTo !== taskData.assignedTo) {
-        const shortEmail = taskData.assignedTo.split("@")[0];
-        logActivity(`Task "${taskData.title}" was reassigned to ${shortEmail} by ${user.name.split(" ")[0]}.`);
       } else {
-        logActivity(`Task "${taskData.title}" details were updated by ${user.name.split(" ")[0]}.`);
+        // Create Task API call
+        await createTask({
+          title: taskData.title,
+          description: taskData.description,
+          dueDate: new Date(taskData.dueDate).toISOString(),
+          priority: mapFrontendTaskPriorityToBackend(taskData.priority),
+          status: mapFrontendTaskStatusToBackend(taskData.status),
+          projectId: taskData.projectId,
+          assignedMemberId: assignedMemberId
+        }).unwrap();
+
+        // Log creation
+        const shortEmail = taskData.assignedTo.split("@")[0];
+        logActivity(`Task "${taskData.title}" was created and assigned to ${shortEmail} by ${user.name.split(" ")[0]}.`);
       }
-    } else {
-      // Create
-      const newTask: Task = {
-        id: `task-${Date.now()}`,
-        ...taskData,
-        createdAt: new Date().toISOString()
-      };
-      const updatedTasks = [...tasks, newTask];
-      setTasks(updatedTasks);
-      localStorage.setItem("sptc-tasks", JSON.stringify(updatedTasks));
 
-      // Log creation
-      const shortEmail = taskData.assignedTo.split("@")[0];
-      logActivity(`Task "${taskData.title}" was created and assigned to ${shortEmail} by ${user.name.split(" ")[0]}.`);
+      setIsTaskModalOpen(false);
+      setValidationError("");
+    } catch (err: any) {
+      console.error("Save task error:", err);
+      setValidationError(err.data?.message || err.message || "Failed to save task.");
     }
-
-    setIsTaskModalOpen(false);
-    setValidationError("");
   };
 
-  const handleDeleteTask = (id: string) => {
+  const handleDeleteTask = async (id: string) => {
     if (!canManageTasks) return;
     const taskToDelete = tasks.find((t) => t.id === id);
-    const updatedTasks = tasks.filter((t) => t.id !== id);
-    setTasks(updatedTasks);
-    localStorage.setItem("sptc-tasks", JSON.stringify(updatedTasks));
-
-    if (taskToDelete) {
-      logActivity(`Task "${taskToDelete.title}" was deleted by ${user.name.split(" ")[0]}.`);
+    try {
+      await deleteTask(id).unwrap();
+      if (taskToDelete) {
+        logActivity(`Task "${taskToDelete.title}" was deleted by ${user.name.split(" ")[0]}.`);
+      }
+    } catch (err) {
+      console.error("Failed to delete task:", err);
     }
   };
 
-  const handleQuickStatusChange = (task: Task, newStatus: "Todo" | "In Progress" | "Completed") => {
+  const handleQuickStatusChange = async (task: Task, newStatus: "Todo" | "In Progress" | "Completed") => {
     if (!canChangeTaskStatus(task)) return;
 
-    const updatedTasks = tasks.map((t) => {
-      if (t.id === task.id) {
-        return { ...t, status: newStatus };
-      }
-      return t;
-    });
-    setTasks(updatedTasks);
-    localStorage.setItem("sptc-tasks", JSON.stringify(updatedTasks));
+    try {
+      await updateTask({
+        taskId: task.id,
+        taskData: {
+          status: mapFrontendTaskStatusToBackend(newStatus)
+        }
+      }).unwrap();
 
-    logActivity(`Task "${task.title}" status was updated to "${newStatus}" by ${user.name.split(" ")[0]}.`);
+      logActivity(`Task "${task.title}" status was updated to "${newStatus}" by ${user.name.split(" ")[0]}.`);
+    } catch (err) {
+      console.error("Failed to update status quickly:", err);
+    }
   };
+
+  if (projectsLoading || tasksLoading) {
+    return (
+      <div className="loader-container">
+        <div className="loader-spinner"></div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -179,6 +232,12 @@ export default function TasksPage() {
           Track project workloads, filter task states, and update completion status.
         </p>
       </section>
+
+      {(projectsError || tasksError) && (
+        <div className="alert alert-danger" style={{ marginBottom: "20px" }}>
+          Failed to load live backend data. Please refresh the page.
+        </div>
+      )}
 
       <TaskTable
         tasks={tasks}
@@ -199,6 +258,7 @@ export default function TasksPage() {
         onSubmit={handleSaveTask}
         editingTask={editingTask}
         projects={projects}
+        users={users}
         canManageTasks={canManageTasks}
         validationError={validationError}
         setValidationError={setValidationError}

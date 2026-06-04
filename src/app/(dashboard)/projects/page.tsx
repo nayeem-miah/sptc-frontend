@@ -10,6 +10,7 @@ import { logActivity } from "@/utils/activityLogger";
 import {
   useGetProjectsQuery,
   useCreateProjectMutation,
+  useUpdateProjectMutation,
   useDeleteProjectMutation,
   mapBackendProjectStatusToFrontend,
   mapFrontendProjectStatusToBackend,
@@ -23,6 +24,7 @@ export default function ProjectsPage() {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [projectSearchQuery, setProjectSearchQuery] = useState("");
   const [validationError, setValidationError] = useState("");
   
@@ -39,6 +41,7 @@ export default function ProjectsPage() {
   // Fetch projects from RTK Query live backend API
   const { data: projectsResponse, isLoading: projectsLoading, error: projectsError } = useGetProjectsQuery(undefined);
   const [createProject, { isLoading: isCreating }] = useCreateProjectMutation();
+  const [updateProject, { isLoading: isUpdating }] = useUpdateProjectMutation();
   const [deleteProject, { isLoading: isDeleting }] = useDeleteProjectMutation();
 
   useEffect(() => {
@@ -64,7 +67,7 @@ export default function ProjectsPage() {
     status: mapBackendProjectStatusToFrontend(p.status),
   }));
 
-  const handleCreateProject = async (projectData: {
+  const handleSaveProject = async (projectData: {
     name: string;
     description: string;
     deadline: string;
@@ -74,25 +77,49 @@ export default function ProjectsPage() {
       const backendStatus = mapFrontendProjectStatusToBackend(projectData.status);
       const isoDeadline = new Date(projectData.deadline).toISOString();
 
-      const response = await createProject({
-        name: projectData.name,
-        description: projectData.description,
-        deadline: isoDeadline,
-        status: backendStatus,
-        memberIds: [],
-      }).unwrap();
+      if (editingProject) {
+        // Update Project
+        const response = await updateProject({
+          projectId: editingProject.id,
+          projectData: {
+            name: projectData.name,
+            description: projectData.description,
+            deadline: isoDeadline,
+            status: backendStatus
+          }
+        }).unwrap();
 
-      if (response.success) {
-        logActivity(`Project "${projectData.name}" was created by ${user.name.split(" ")[0]}.`);
-        setValidationError("");
-        setIsProjectModalOpen(false);
-        setSuccessMessage(`Successfully created project "${projectData.name}"`);
-        setTimeout(() => setSuccessMessage(""), 4000);
+        if (response.success) {
+          logActivity(`Project "${projectData.name}" details were updated by ${user.name.split(" ")[0]}.`);
+          setValidationError("");
+          setIsProjectModalOpen(false);
+          setSuccessMessage(`Successfully updated project "${projectData.name}"`);
+          setTimeout(() => setSuccessMessage(""), 4000);
+        } else {
+          setValidationError(response.message || "Failed to update project.");
+        }
       } else {
-        setValidationError(response.message || "Failed to create project.");
+        // Create Project
+        const response = await createProject({
+          name: projectData.name,
+          description: projectData.description,
+          deadline: isoDeadline,
+          status: backendStatus,
+          memberIds: [],
+        }).unwrap();
+
+        if (response.success) {
+          logActivity(`Project "${projectData.name}" was created by ${user.name.split(" ")[0]}.`);
+          setValidationError("");
+          setIsProjectModalOpen(false);
+          setSuccessMessage(`Successfully created project "${projectData.name}"`);
+          setTimeout(() => setSuccessMessage(""), 4000);
+        } else {
+          setValidationError(response.message || "Failed to create project.");
+        }
       }
     } catch (err: any) {
-      console.error("Create project error:", err);
+      console.error("Save project error:", err);
       setValidationError(err.data?.message || err.message || "An unexpected error occurred.");
     }
   };
@@ -178,15 +205,29 @@ export default function ProjectsPage() {
         setSearchQuery={setProjectSearchQuery}
         canManageProjects={canManageProjects}
         canDeleteProjects={canDeleteProjects}
+        onEditProject={(project) => {
+          setEditingProject(project);
+          setValidationError("");
+          setIsProjectModalOpen(true);
+        }}
         onDeleteProject={handleDeleteProject}
-        onOpenCreateProject={() => setIsProjectModalOpen(true)}
+        onOpenCreateProject={() => {
+          setEditingProject(null);
+          setValidationError("");
+          setIsProjectModalOpen(true);
+        }}
         todayDateString={todayDateString}
       />
 
       <CreateProjectModal
         isOpen={isProjectModalOpen}
-        onClose={() => setIsProjectModalOpen(false)}
-        onSubmit={handleCreateProject}
+        onClose={() => {
+          setIsProjectModalOpen(false);
+          setEditingProject(null);
+          setValidationError("");
+        }}
+        onSubmit={handleSaveProject}
+        editingProject={editingProject}
         validationError={validationError}
         setValidationError={setValidationError}
       />

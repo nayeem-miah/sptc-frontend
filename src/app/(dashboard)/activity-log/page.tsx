@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
-import { Activity } from "@/utils/activityLogger";
 import { useAuth } from "@/context/AuthContext";
+import { Activity } from "@/utils/activityLogger";
+import { useEffect, useState } from "react";
 
 const DEFAULT_ACTIVITIES: Activity[] = [
   { id: "act-1", time: "10:00 AM", message: 'Project "E-Commerce App" created' },
@@ -43,18 +42,13 @@ export default function ActivityLogPage() {
             Track recent workspace updates, task assignments, and progress indicators.
           </p>
         </div>
-        {activities.length > 0 && (
-          <button className="btn btn-secondary" onClick={handleClearLogs} style={{ width: "auto" }}>
-            Clear Logs
-          </button>
-        )}
       </section>
 
       <div className="dashboard-panel" style={{ marginTop: "24px" }}>
         <div className="panel-header">
           <h3 className="panel-title">Recent System Events</h3>
         </div>
-        
+
         {activities.length === 0 ? (
           <div style={{ textAlign: "center", color: "var(--muted)", padding: "40px" }}>
             No activities recorded in the system yet.
@@ -62,13 +56,13 @@ export default function ActivityLogPage() {
         ) : (
           <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "16px" }}>
             {activities.map((act) => (
-              <li 
-                key={act.id} 
-                style={{ 
-                  display: "flex", 
-                  gap: "16px", 
-                  fontSize: "14px", 
-                  paddingBottom: "12px", 
+              <li
+                key={act.id}
+                style={{
+                  display: "flex",
+                  gap: "16px",
+                  fontSize: "14px",
+                  paddingBottom: "12px",
                   borderBottom: "1px solid var(--border)"
                 }}
               >

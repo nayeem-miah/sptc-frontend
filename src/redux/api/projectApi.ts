@@ -50,6 +50,26 @@ export const projectApi = baseApi.injectEndpoints({
         { type: "Project" as const, id: projectId },
       ],
     }),
+    addProjectMember: builder.mutation({
+      query: ({ projectId, memberId }) => ({
+        url: `/projects/${projectId}/add-member`,
+        method: "POST",
+        body: { memberId },
+      }),
+      invalidatesTags: (result, error, { projectId }) => [
+        { type: "Project", id: projectId },
+      ],
+    }),
+    removeProjectMember: builder.mutation({
+      query: ({ projectId, memberId }) => ({
+        url: `/projects/${projectId}/remove-member`,
+        method: "POST",
+        body: { memberId },
+      }),
+      invalidatesTags: (result, error, { projectId }) => [
+        { type: "Project", id: projectId },
+      ],
+    }),
   }),
 });
 
@@ -59,6 +79,8 @@ export const {
   useUpdateProjectMutation,
   useDeleteProjectMutation,
   useGetProjectByIdQuery,
+  useAddProjectMemberMutation,
+  useRemoveProjectMemberMutation,
 } = projectApi;
 
 export const mapBackendProjectStatusToFrontend = (status: string): "Active" | "Completed" | "On Hold" => {

@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // RTK Query hook retrieves user list and automatically invalidates/refetches
   const { data: usersResponse } = useGetAllUsersQuery(undefined, {
-    skip: !token || user?.role !== "Admin",
+    skip: !token || (user?.role !== "Admin" && user?.role !== "Project Manager"),
   });
 
   useEffect(() => {

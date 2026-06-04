@@ -1,10 +1,25 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { useGetProjectByIdQuery, mapBackendProjectStatusToFrontend } from "@/redux/api/projectApi";
-import { Project, Task, TEAM_MEMBERS } from "@/types";
+import {
+  useGetProjectByIdQuery,
+  mapBackendProjectStatusToFrontend,
+  useAddProjectMemberMutation,
+  useRemoveProjectMemberMutation
+} from "@/redux/api/projectApi";
+import {
+  useGetTasksQuery,
+  useCreateTaskMutation,
+  useUpdateTaskMutation,
+  useDeleteTaskMutation,
+  mapBackendTaskStatusToFrontend,
+  mapFrontendTaskStatusToBackend,
+  mapBackendTaskPriorityToFrontend,
+  mapFrontendTaskPriorityToBackend
+} from "@/redux/api/taskApi";
+import { Project, Task, User } from "@/types";
 import { logActivity } from "@/utils/activityLogger";
 import CreateTaskModal from "@/components/CreateTaskModal";
 
@@ -18,10 +33,9 @@ export default function ProjectDetailsPage({ params }: PageProps) {
   const resolvedParams = React.use(params);
   const projectId = resolvedParams.projectId;
 
-  const { user } = useAuth();
+  const { user, users } = useAuth();
   
-  // Tasks state
-  const [tasks, setTasks] = useState<Task[]>([]);
+  // Modals state
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [validationError, setValidationError] = useState("");
@@ -35,20 +49,31 @@ export default function ProjectDetailsPage({ params }: PageProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
 
+  // Dynamic selected user to add as project member
+  const [selectedMemberToAdd, setSelectedMemberToAdd] = useState("");
+  
+  // Custom confirmation modal for project member removal
+  const [memberToRemove, setMemberToRemove] = useState<User | null>(null);
+  const [isConfirmMemberOpen, setIsConfirmMemberOpen] = useState(false);
+
+  // Member notification states
+  const [memberSuccessMessage, setMemberSuccessMessage] = useState("");
+  const [memberErrorMessage, setMemberErrorMessage] = useState("");
+
   const todayDateString = new Date().toISOString().split("T")[0];
 
   // Fetch project details from live backend API
   const { data: projectResponse, isLoading: projectLoading, error: projectError } = useGetProjectByIdQuery(projectId);
 
-  // Load tasks from localStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedTasks = localStorage.getItem("sptc-tasks");
-      if (storedTasks) {
-        setTasks(JSON.parse(storedTasks));
-      }
-    }
-  }, []);
+  // Fetch tasks from live backend API
+  const { data: tasksResponse, isLoading: tasksLoading, error: tasksError } = useGetTasksQuery(undefined);
+
+  const [createTask] = useCreateTaskMutation();
+  const [updateTask] = useUpdateTaskMutation();
+  const [deleteTask] = useDeleteTaskMutation();
+
+  const [addProjectMember] = useAddProjectMemberMutation();
+  const [removeProjectMember] = useRemoveProjectMemberMutation();
 
   if (!user) return null;
 
@@ -66,7 +91,7 @@ export default function ProjectDetailsPage({ params }: PageProps) {
     return checkDate < today;
   };
 
-  if (projectLoading) {
+  if (projectLoading || tasksLoading) {
     return (
       <div className="loader-container">
         <div className="loader-spinner"></div>
@@ -100,6 +125,48 @@ export default function ProjectDetailsPage({ params }: PageProps) {
     status: mapBackendProjectStatusToFrontend(backendProject.status),
   };
 
+  // Map backend project members dynamically
+  const projectMembers: User[] = [];
+  if (backendProject.members && Array.isArray(backendProject.members)) {
+    projectMembers.push(
+      ...backendProject.members.map((m: any) => ({
+        id: m.id || m._id,
+        name: m.name,
+        email: m.email,
+        role: m.role === "ADMIN" ? "Admin" as const : m.role === "PROJECT_MANAGER" ? "Project Manager" as const : "Team Member" as const,
+      }))
+    );
+  } else if (backendProject.memberIds && Array.isArray(backendProject.memberIds)) {
+    backendProject.memberIds.forEach((id: string) => {
+      const found = users.find((u) => u.id === id);
+      if (found) projectMembers.push(found);
+    });
+  }
+
+  // Map backend tasks to frontend structure
+  const backendTasks = tasksResponse?.data?.data || [];
+  const tasks: Task[] = backendTasks.map((t: any) => {
+    let email = t.assignedTo || "";
+    if (t.assignedMember?.email) {
+      email = t.assignedMember.email;
+    } else if (t.assignedMemberId) {
+      const matched = users.find((u) => u.id === t.assignedMemberId);
+      if (matched) email = matched.email;
+    }
+
+    return {
+      id: t.id,
+      title: t.title,
+      description: t.description || "",
+      projectId: t.projectId || "",
+      assignedTo: email,
+      dueDate: t.dueDate ? t.dueDate.split("T")[0] : "",
+      priority: mapBackendTaskPriorityToFrontend(t.priority),
+      status: mapBackendTaskStatusToFrontend(t.status),
+      createdAt: t.createdAt || new Date().toISOString()
+    };
+  });
+
   // Filter tasks specific to this project
   const projectTasks = tasks.filter((t) => t.projectId === project.id);
 
@@ -132,7 +199,7 @@ export default function ProjectDetailsPage({ params }: PageProps) {
     setIsTaskModalOpen(true);
   };
 
-  const handleSaveTask = (taskData: {
+  const handleSaveTask = async (taskData: {
     title: string;
     description: string;
     projectId: string;
@@ -165,42 +232,57 @@ export default function ProjectDetailsPage({ params }: PageProps) {
       return;
     }
 
-    let updatedTasks: Task[] = [];
-    if (editingTask) {
-      // Edit
-      updatedTasks = tasks.map((t) => {
-        if (t.id === editingTask.id) {
-          return { ...t, ...taskData };
+    // Find dynamic user ID by email
+    const matchedUser = users.find((u) => u.email === taskData.assignedTo);
+    const assignedMemberId = matchedUser ? matchedUser.id : "";
+
+    try {
+      if (editingTask) {
+        // Edit Task API call
+        await updateTask({
+          taskId: editingTask.id,
+          taskData: {
+            title: taskData.title,
+            description: taskData.description,
+            dueDate: new Date(taskData.dueDate).toISOString(),
+            priority: mapFrontendTaskPriorityToBackend(taskData.priority),
+            status: mapFrontendTaskStatusToBackend(taskData.status),
+            projectId: taskData.projectId,
+            assignedMemberId: assignedMemberId
+          }
+        }).unwrap();
+
+        // Log update activity
+        if (editingTask.status !== taskData.status) {
+          logActivity(`Task "${taskData.title}" status was marked as "${taskData.status}" by ${user.name.split(" ")[0]}.`);
+        } else if (editingTask.assignedTo !== taskData.assignedTo) {
+          const shortEmail = taskData.assignedTo.split("@")[0];
+          logActivity(`Task "${taskData.title}" was reassigned to ${shortEmail} by ${user.name.split(" ")[0]}.`);
+        } else {
+          logActivity(`Task "${taskData.title}" details were updated by ${user.name.split(" ")[0]}.`);
         }
-        return t;
-      });
-      
-      // Log update activity
-      if (editingTask.status !== taskData.status) {
-        logActivity(`Task "${taskData.title}" status was marked as "${taskData.status}" by ${user.name.split(" ")[0]}.`);
-      } else if (editingTask.assignedTo !== taskData.assignedTo) {
-        const shortEmail = taskData.assignedTo.split("@")[0];
-        logActivity(`Task "${taskData.title}" was reassigned to ${shortEmail} by ${user.name.split(" ")[0]}.`);
       } else {
-        logActivity(`Task "${taskData.title}" details were updated by ${user.name.split(" ")[0]}.`);
+        // Create Task API call
+        await createTask({
+          title: taskData.title,
+          description: taskData.description,
+          dueDate: new Date(taskData.dueDate).toISOString(),
+          priority: mapFrontendTaskPriorityToBackend(taskData.priority),
+          status: mapFrontendTaskStatusToBackend(taskData.status),
+          projectId: taskData.projectId,
+          assignedMemberId: assignedMemberId
+        }).unwrap();
+
+        const shortEmail = taskData.assignedTo.split("@")[0];
+        logActivity(`Task "${taskData.title}" was created and assigned to ${shortEmail} by ${user.name.split(" ")[0]}.`);
       }
-    } else {
-      // Create
-      const newTask: Task = {
-        id: `task-${Date.now()}`,
-        ...taskData,
-        createdAt: new Date().toISOString(),
-      };
-      updatedTasks = [...tasks, newTask];
 
-      const shortEmail = taskData.assignedTo.split("@")[0];
-      logActivity(`Task "${taskData.title}" was created and assigned to ${shortEmail} by ${user.name.split(" ")[0]}.`);
+      setIsTaskModalOpen(false);
+      setValidationError("");
+    } catch (err: any) {
+      console.error("Save task error:", err);
+      setValidationError(err.data?.message || err.message || "Failed to save task.");
     }
-
-    setTasks(updatedTasks);
-    localStorage.setItem("sptc-tasks", JSON.stringify(updatedTasks));
-    setIsTaskModalOpen(false);
-    setValidationError("");
   };
 
   const handleDeleteTaskClick = (task: Task) => {
@@ -209,29 +291,96 @@ export default function ProjectDetailsPage({ params }: PageProps) {
     setIsConfirmDeleteOpen(true);
   };
 
-  const confirmDeleteTaskAction = () => {
+  const confirmDeleteTaskAction = async () => {
     if (!taskToDelete) return;
-    const updatedTasks = tasks.filter((t) => t.id !== taskToDelete.id);
-    setTasks(updatedTasks);
-    localStorage.setItem("sptc-tasks", JSON.stringify(updatedTasks));
-    logActivity(`Task "${taskToDelete.title}" was deleted by ${user.name.split(" ")[0]}.`);
-    setIsConfirmDeleteOpen(false);
-    setTaskToDelete(null);
+    try {
+      await deleteTask(taskToDelete.id).unwrap();
+      logActivity(`Task "${taskToDelete.title}" was deleted by ${user.name.split(" ")[0]}.`);
+      setIsConfirmDeleteOpen(false);
+      setTaskToDelete(null);
+    } catch (err) {
+      console.error("Failed to delete task:", err);
+    }
   };
 
-  const handleQuickStatusChange = (task: Task, newStatus: "Todo" | "In Progress" | "Completed") => {
+  const handleQuickStatusChange = async (task: Task, newStatus: "Todo" | "In Progress" | "Completed") => {
     if (!canChangeTaskStatus(task)) return;
 
-    const updatedTasks = tasks.map((t) => {
-      if (t.id === task.id) {
-        return { ...t, status: newStatus };
-      }
-      return t;
-    });
-    setTasks(updatedTasks);
-    localStorage.setItem("sptc-tasks", JSON.stringify(updatedTasks));
+    try {
+      await updateTask({
+        taskId: task.id,
+        taskData: {
+          status: mapFrontendTaskStatusToBackend(newStatus)
+        }
+      }).unwrap();
 
-    logActivity(`Task "${task.title}" status was updated to "${newStatus}" by ${user.name.split(" ")[0]}.`);
+      logActivity(`Task "${task.title}" status was updated to "${newStatus}" by ${user.name.split(" ")[0]}.`);
+    } catch (err) {
+      console.error("Failed to update task status quickly:", err);
+    }
+  };
+
+  // Add Member Handler
+  const handleAddMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMemberToAdd) return;
+    setMemberSuccessMessage("");
+    setMemberErrorMessage("");
+    try {
+      const matched = users.find((u) => u.id === selectedMemberToAdd);
+      if (!matched) {
+        setMemberErrorMessage("Selected user not found.");
+        return;
+      }
+      const response = await addProjectMember({ projectId: project.id, memberId: matched.id }).unwrap();
+      if (response.success) {
+        logActivity(`User "${matched.name.split(" ")[0]}" was added as a member to project "${project.name}" by ${user.name.split(" ")[0]}.`);
+        setMemberSuccessMessage(`Successfully added ${matched.name} to the project.`);
+        setSelectedMemberToAdd("");
+        setTimeout(() => setMemberSuccessMessage(""), 4000);
+      } else {
+        setMemberErrorMessage(response.message || "Failed to add project member.");
+        setTimeout(() => setMemberErrorMessage(""), 4000);
+      }
+    } catch (err: any) {
+      console.error("Failed to add project member:", err);
+      setMemberErrorMessage(err.data?.message || err.message || "Failed to add project member.");
+      setTimeout(() => setMemberErrorMessage(""), 4000);
+    }
+  };
+
+  // Remove Member Handler
+  const handleRemoveMemberClick = (member: User) => {
+    if (!canManageTasks) return;
+    setMemberToRemove(member);
+    setIsConfirmMemberOpen(true);
+  };
+
+  const confirmRemoveMemberAction = async () => {
+    if (!memberToRemove) return;
+    setMemberSuccessMessage("");
+    setMemberErrorMessage("");
+    try {
+      const response = await removeProjectMember({ projectId: project.id, memberId: memberToRemove.id }).unwrap();
+      if (response.success) {
+        logActivity(`User "${memberToRemove.name.split(" ")[0]}" was removed from project "${project.name}" by ${user.name.split(" ")[0]}.`);
+        setMemberSuccessMessage(`Successfully removed ${memberToRemove.name} from the project.`);
+        setIsConfirmMemberOpen(false);
+        setMemberToRemove(null);
+        setTimeout(() => setMemberSuccessMessage(""), 4000);
+      } else {
+        setMemberErrorMessage(response.message || "Failed to remove project member.");
+        setTimeout(() => setMemberErrorMessage(""), 4000);
+        setIsConfirmMemberOpen(false);
+        setMemberToRemove(null);
+      }
+    } catch (err: any) {
+      console.error("Failed to remove project member:", err);
+      setMemberErrorMessage(err.data?.message || err.message || "Failed to remove project member.");
+      setTimeout(() => setMemberErrorMessage(""), 4000);
+      setIsConfirmMemberOpen(false);
+      setMemberToRemove(null);
+    }
   };
 
   const projectList: Project[] = [project];
@@ -372,220 +521,333 @@ export default function ProjectDetailsPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* Scoped Project Tasks Section */}
-      <section className="dashboard-panel">
-        <div className="panel-header" style={{ marginBottom: "20px" }}>
-          <h3 className="panel-title" style={{ fontSize: "16px" }}>Project Tasks</h3>
-        </div>
-
-        {/* Filters Row */}
-        <div className="filters-row">
-          <div className="search-input-wrapper">
-            <svg
-              className="search-icon"
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" x2="16.65" y1="21" y2="16.65" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search project tasks..."
-              className="form-input search-input"
-              value={taskSearchQuery}
-              onChange={(e) => setTaskSearchQuery(e.target.value)}
-            />
-          </div>
-
-          <div className="filter-item">
-            <select
-              className="form-input form-select"
-              value={taskStatusFilter}
-              onChange={(e) => setTaskStatusFilter(e.target.value)}
-            >
-              <option value="all">All Statuses</option>
-              <option value="Todo">Todo</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-            </select>
-          </div>
-
-          <div className="filter-item">
-            <select
-              className="form-input form-select"
-              value={taskPriorityFilter}
-              onChange={(e) => setTaskPriorityFilter(e.target.value)}
-            >
-              <option value="all">All Priorities</option>
-              <option value="High">High</option>
-              <option value="Medium">Medium</option>
-              <option value="Low">Low</option>
-            </select>
-          </div>
-
-          {canManageTasks && (
-            <div style={{ marginLeft: "auto" }}>
-              <button className="btn btn-primary" onClick={handleOpenCreateTask} style={{ width: "auto" }}>
-                + New Task
-              </button>
+      {/* Two-column overview grid */}
+      <section style={{ marginTop: "24px" }} className="dashboard-grid">
+        
+        {/* Left/Main Column: Project Tasks */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div className="dashboard-panel">
+            <div className="panel-header" style={{ marginBottom: "20px" }}>
+              <h3 className="panel-title" style={{ fontSize: "15px" }}>Project Tasks</h3>
             </div>
-          )}
-        </div>
 
-        {/* Tasks Table */}
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Task Title</th>
-                <th>Assignee</th>
-                <th>Due Date</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTasks.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: "center", color: "var(--muted)", padding: "24px" }}>
-                    No tasks found for this project.
-                  </td>
-                </tr>
-              ) : (
-                filteredTasks.map((task) => {
-                  const isOwner = task.assignedTo === user.email;
-                  const hasStatusTogglePermission = canChangeTaskStatus(task);
-                  const assigneeName = TEAM_MEMBERS.find((m) => m.email === task.assignedTo)?.name.split(" ")[0] || task.assignedTo;
+            {tasksError && (
+              <div className="alert alert-danger" style={{ marginBottom: "20px" }}>
+                Failed to load tasks from live backend. Please refresh the page.
+              </div>
+            )}
 
-                  return (
-                    <tr key={task.id}>
-                      <td>
-                        <div style={{ fontWeight: "500" }}>{task.title}</div>
-                        {task.description && (
-                          <div style={{ fontSize: "11px", color: "var(--muted)", marginTop: "2px" }}>
-                            {task.description}
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        <span style={{ fontSize: "12px" }}>{assigneeName}</span>
-                      </td>
-                      <td>
-                        <span
-                          style={{
-                            color:
-                              task.dueDate < todayDateString && task.status !== "Completed"
-                                ? "var(--danger)"
-                                : "inherit",
-                          }}
-                        >
-                          {task.dueDate}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`tag tag-priority-${task.priority.toLowerCase()}`}>
-                          {task.priority}
-                        </span>
-                      </td>
-                      <td>
-                        {hasStatusTogglePermission ? (
-                          <select
-                            className="form-input"
-                            style={{ padding: "4px 8px", fontSize: "12px", width: "auto" }}
-                            value={task.status}
-                            onChange={(e) => handleQuickStatusChange(task, e.target.value as any)}
-                          >
-                            <option value="Todo">Todo</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Completed">Completed</option>
-                          </select>
-                        ) : (
-                          <span className={`tag tag-status-${task.status.toLowerCase().replace(" ", "-")}`}>
-                            {task.status}
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        <div className="action-btn-group">
-                          {canManageTasks ? (
-                            <>
-                              <button
-                                onClick={() => handleOpenEditTask(task)}
-                                className="action-btn"
-                                title="Edit Task"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                >
-                                  <path d="M12 20h9" />
-                                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                                </svg>
-                              </button>
-                              <button
-                                onClick={() => handleDeleteTaskClick(task)}
-                                className="action-btn action-btn-danger"
-                                title="Delete Task"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                >
-                                  <path d="M3 6h18" />
-                                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                </svg>
-                              </button>
-                            </>
-                          ) : isOwner ? (
-                            <button
-                              onClick={() => handleOpenEditTask(task)}
-                              className="action-btn"
-                              title="Edit Task Status"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                              >
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                              </svg>
-                            </button>
-                          ) : (
-                            <span style={{ color: "var(--muted-foreground)", fontSize: "11px" }}>
-                              No access
-                            </span>
-                          )}
-                        </div>
+            {/* Filters Row */}
+            <div className="filters-row">
+              <div className="search-input-wrapper">
+                <svg
+                  className="search-icon"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" x2="16.65" y1="21" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search project tasks..."
+                  className="form-input search-input"
+                  value={taskSearchQuery}
+                  onChange={(e) => setTaskSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <div className="filter-item">
+                <select
+                  className="form-input form-select"
+                  value={taskStatusFilter}
+                  onChange={(e) => setTaskStatusFilter(e.target.value)}
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="Todo">Todo</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+
+              <div className="filter-item">
+                <select
+                  className="form-input form-select"
+                  value={taskPriorityFilter}
+                  onChange={(e) => setTaskPriorityFilter(e.target.value)}
+                >
+                  <option value="all">All Priorities</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+
+              {canManageTasks && (
+                <div style={{ marginLeft: "auto" }}>
+                  <button className="btn btn-primary" onClick={handleOpenCreateTask} style={{ width: "auto" }}>
+                    + New Task
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Tasks Table */}
+            <div className="table-container">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Task Title</th>
+                    <th>Assignee</th>
+                    <th>Due Date</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTasks.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ textAlign: "center", color: "var(--muted)", padding: "24px" }}>
+                        No tasks found for this project.
                       </td>
                     </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                  ) : (
+                    filteredTasks.map((task) => {
+                      const isOwner = task.assignedTo === user.email;
+                      const hasStatusTogglePermission = canChangeTaskStatus(task);
+                      const assigneeName = users.find((m) => m.email === task.assignedTo)?.name.split(" ")[0] || task.assignedTo;
+
+                      return (
+                        <tr key={task.id}>
+                          <td>
+                            <div style={{ fontWeight: "500" }}>{task.title}</div>
+                            {task.description && (
+                              <div style={{ fontSize: "11px", color: "var(--muted)", marginTop: "2px" }}>
+                                {task.description}
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            <span style={{ fontSize: "12px" }}>{assigneeName}</span>
+                          </td>
+                          <td>
+                            <span
+                              style={{
+                                color:
+                                  task.dueDate < todayDateString && task.status !== "Completed"
+                                    ? "var(--danger)"
+                                    : "inherit",
+                              }}
+                            >
+                              {task.dueDate}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`tag tag-priority-${task.priority.toLowerCase()}`}>
+                              {task.priority}
+                            </span>
+                          </td>
+                          <td>
+                            {hasStatusTogglePermission ? (
+                              <select
+                                className="form-input"
+                                style={{ padding: "4px 8px", fontSize: "12px", width: "auto" }}
+                                value={task.status}
+                                onChange={(e) => handleQuickStatusChange(task, e.target.value as any)}
+                              >
+                                <option value="Todo">Todo</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                              </select>
+                            ) : (
+                              <span className={`tag tag-status-${task.status.toLowerCase().replace(" ", "-")}`}>
+                                {task.status}
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            <div className="action-btn-group">
+                              {canManageTasks ? (
+                                <>
+                                  <button
+                                    onClick={() => handleOpenEditTask(task)}
+                                    className="action-btn"
+                                    title="Edit Task"
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                    >
+                                      <path d="M12 20h9" />
+                                      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteTaskClick(task)}
+                                    className="action-btn action-btn-danger"
+                                    title="Delete Task"
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                    >
+                                      <path d="M3 6h18" />
+                                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                    </svg>
+                                  </button>
+                                </>
+                              ) : isOwner ? (
+                                <button
+                                  onClick={() => handleOpenEditTask(task)}
+                                  className="action-btn"
+                                  title="Edit Task Status"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                  >
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                  </svg>
+                                </button>
+                              ) : (
+                                <span style={{ color: "var(--muted-foreground)", fontSize: "11px" }}>
+                                  No access
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Right/Sidebar Column: Members List and Management */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div className="dashboard-panel">
+            <div className="panel-header" style={{ marginBottom: "20px" }}>
+              <h3 className="panel-title" style={{ fontSize: "15px" }}>Project Team</h3>
+            </div>
+
+            {/* Success/Error Alerts for Member Actions */}
+            {memberSuccessMessage && (
+              <div className="alert alert-success" style={{ marginBottom: "12px", padding: "8px 12px", fontSize: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>{memberSuccessMessage}</span>
+              </div>
+            )}
+            {memberErrorMessage && (
+              <div className="alert alert-danger" style={{ marginBottom: "12px", padding: "8px 12px", fontSize: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                <span>{memberErrorMessage}</span>
+              </div>
+            )}
+
+            {/* Add Member form (Admin/PM only) */}
+            {canManageTasks && (
+              <form onSubmit={handleAddMember} style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+                <select
+                  className="form-input form-select"
+                  style={{ flex: 1, padding: "8px 12px", fontSize: "13px" }}
+                  value={selectedMemberToAdd}
+                  onChange={(e) => setSelectedMemberToAdd(e.target.value)}
+                  required
+                >
+                  <option value="">Select user to add...</option>
+                  {users
+                    .filter((u) => u.role !== "Admin" && !projectMembers.some((m) => m.id === u.id))
+                    .map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.role})
+                      </option>
+                    ))}
+                </select>
+                <button type="submit" className="btn btn-primary" style={{ width: "auto", padding: "8px 16px" }}>
+                  Add
+                </button>
+              </form>
+            )}
+
+            {/* Members List */}
+            {projectMembers.length === 0 ? (
+              <div style={{ fontSize: "13px", color: "var(--muted)", padding: "12px 0", textAlign: "center" }}>
+                No team members assigned to this project.
+              </div>
+            ) : (
+              <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "8px" }}>
+                {projectMembers.map((member) => (
+                  <li
+                    key={member.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "10px 12px",
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius)",
+                      backgroundColor: "var(--secondary)",
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: "13px", fontWeight: "500" }}>{member.name}</div>
+                      <div style={{ fontSize: "11px", color: "var(--muted)", marginTop: "2px" }}>
+                        {member.role}
+                      </div>
+                    </div>
+                    {canManageTasks && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveMemberClick(member)}
+                        className="action-btn action-btn-danger"
+                        title="Remove Member"
+                        style={{ width: "24px", height: "24px" }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </section>
 
@@ -600,6 +862,7 @@ export default function ProjectDetailsPage({ params }: PageProps) {
         onSubmit={handleSaveTask}
         editingTask={editingTask}
         projects={projectList}
+        users={users}
         canManageTasks={canManageTasks}
         validationError={validationError}
         setValidationError={setValidationError}
@@ -646,6 +909,53 @@ export default function ProjectDetailsPage({ params }: PageProps) {
                 onClick={confirmDeleteTaskAction}
               >
                 Delete Task
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Member Remove Confirmation Modal */}
+      {isConfirmMemberOpen && memberToRemove && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: "400px" }}>
+            <div className="modal-header">
+              <h3 className="modal-title" style={{ color: "var(--danger)" }}>Confirm Remove Member</h3>
+              <button
+                className="modal-close-btn"
+                onClick={() => {
+                  setIsConfirmMemberOpen(false);
+                  setMemberToRemove(null);
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div style={{ margin: "16px 0", fontSize: "14px", color: "var(--foreground)" }}>
+              <p>Are you sure you want to remove <strong>{memberToRemove.name}</strong> from this project?</p>
+              <p style={{ marginTop: "8px", fontSize: "12px", color: "var(--muted)" }}>This user will no longer be assigned to this project, but their account remains intact.</p>
+            </div>
+
+            <div className="modal-footer" style={{ gap: "10px" }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ width: "auto" }}
+                onClick={() => {
+                  setIsConfirmMemberOpen(false);
+                  setMemberToRemove(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ width: "auto", backgroundColor: "var(--danger)", borderColor: "var(--danger)", color: "#ffffff" }}
+                onClick={confirmRemoveMemberAction}
+              >
+                Remove Member
               </button>
             </div>
           </div>

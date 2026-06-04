@@ -1,6 +1,6 @@
 "use client";
 
-import { Project, Task, TEAM_MEMBERS } from "@/types";
+import { Project, Task, TEAM_MEMBERS, User } from "@/types";
 import React, { useEffect, useState } from "react";
 
 interface CreateTaskModalProps {
@@ -17,6 +17,7 @@ interface CreateTaskModalProps {
   }) => void;
   editingTask: Task | null;
   projects: Project[];
+  users?: User[];
   canManageTasks: boolean;
   validationError: string;
   setValidationError: (err: string) => void;
@@ -28,6 +29,7 @@ export default function CreateTaskModal({
   onSubmit,
   editingTask,
   projects,
+  users = [],
   canManageTasks,
   validationError,
   setValidationError
@@ -39,6 +41,9 @@ export default function CreateTaskModal({
   const [taskDueDate, setTaskDueDate] = useState("");
   const [taskPriority, setTaskPriority] = useState<"High" | "Medium" | "Low">("Medium");
   const [taskStatus, setTaskStatus] = useState<"Todo" | "In Progress" | "Completed">("Todo");
+
+  const assignableUsers = users.filter((u) => u.role !== "Admin");
+  const assignableTeamMembers = TEAM_MEMBERS.filter((m) => !m.name.includes("Admin") && m.email !== "admin@sptc.com");
 
   useEffect(() => {
     if (isOpen) {
@@ -54,13 +59,13 @@ export default function CreateTaskModal({
         setTaskTitle("");
         setTaskDesc("");
         setTaskProjId(projects[0]?.id || "");
-        setTaskAssignee(TEAM_MEMBERS[0]?.email || "");
+        setTaskAssignee(assignableUsers.length > 0 ? assignableUsers[0].email : (assignableTeamMembers[0]?.email || ""));
         setTaskDueDate("");
         setTaskPriority("Medium");
         setTaskStatus("Todo");
       }
     }
-  }, [editingTask, isOpen, projects]);
+  }, [editingTask, isOpen, projects, users]);
 
   if (!isOpen) return null;
 
@@ -177,11 +182,17 @@ export default function CreateTaskModal({
               disabled={!canManageTasks}
               required
             >
-              {TEAM_MEMBERS.map((m) => (
-                <option key={m.email} value={m.email}>
-                  {m.name}
-                </option>
-              ))}
+              {assignableUsers.length > 0
+                ? assignableUsers.map((u) => (
+                    <option key={u.id} value={u.email}>
+                      {u.name} ({u.email})
+                    </option>
+                  ))
+                : assignableTeamMembers.map((m) => (
+                    <option key={m.email} value={m.email}>
+                      {m.name}
+                    </option>
+                  ))}
             </select>
           </div>
 

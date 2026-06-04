@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Project } from "@/types";
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface CreateProjectModalProps {
     deadline: string;
     status: "Active" | "Completed" | "On Hold";
   }) => void;
+  editingProject?: Project | null;
   validationError: string;
   setValidationError: (err: string) => void;
 }
@@ -19,14 +21,32 @@ export default function CreateProjectModal({
   isOpen,
   onClose,
   onSubmit,
+  editingProject = null,
   validationError,
   setValidationError
 }: CreateProjectModalProps) {
   const [projName, setProjName] = useState("");
   const [projDesc, setProjDesc] = useState("");
   const [projDeadline, setProjDeadline] = useState("");
+  const [projStatus, setProjStatus] = useState<"Active" | "Completed" | "On Hold">("Active");
 
   const todayDateString = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    if (isOpen) {
+      if (editingProject) {
+        setProjName(editingProject.name);
+        setProjDesc(editingProject.description);
+        setProjDeadline(editingProject.deadline);
+        setProjStatus(editingProject.status);
+      } else {
+        setProjName("");
+        setProjDesc("");
+        setProjDeadline("");
+        setProjStatus("Active");
+      }
+    }
+  }, [editingProject, isOpen]);
 
   if (!isOpen) return null;
 
@@ -50,31 +70,29 @@ export default function CreateProjectModal({
       return;
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (selectedDate < today) {
-      setValidationError("Deadline cannot be in the past.");
-      return;
+    // Only enforce past deadline validation on new projects
+    if (!editingProject) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selectedDate < today) {
+        setValidationError("Deadline cannot be in the past.");
+        return;
+      }
     }
 
     onSubmit({
       name: projName,
       description: projDesc,
       deadline: projDeadline,
-      status: "Active"
+      status: projStatus
     });
-
-    // Reset Form
-    setProjName("");
-    setProjDesc("");
-    setProjDeadline("");
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-header">
-          <h3 className="modal-title">Create New Project</h3>
+          <h3 className="modal-title">{editingProject ? "Edit Project" : "Create New Project"}</h3>
           <button className="modal-close-btn" onClick={onClose}>
             ✕
           </button>
@@ -123,12 +141,29 @@ export default function CreateProjectModal({
               className="form-input"
               value={projDeadline}
               onChange={(e) => setProjDeadline(e.target.value)}
-              min={todayDateString}
+              min={editingProject ? undefined : todayDateString}
               required
             />
           </div>
 
-
+          {editingProject && (
+            <div className="form-group">
+              <label className="form-label" htmlFor="proj-status">
+                Status *
+              </label>
+              <select
+                id="proj-status"
+                className="form-input form-select"
+                value={projStatus}
+                onChange={(e) => setProjStatus(e.target.value as any)}
+                required
+              >
+                <option value="Active">Active</option>
+                <option value="Completed">Completed</option>
+                <option value="On Hold">On Hold</option>
+              </select>
+            </div>
+          )}
 
           <div className="modal-footer">
             <button
@@ -140,7 +175,7 @@ export default function CreateProjectModal({
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" style={{ width: "auto" }}>
-              Create Project
+              {editingProject ? "Save Changes" : "Create Project"}
             </button>
           </div>
         </form>
