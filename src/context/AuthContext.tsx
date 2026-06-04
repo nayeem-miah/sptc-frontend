@@ -2,16 +2,25 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { logActivity } from "@/utils/activityLogger";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
+import {
+  setCredentials,
+  clearCredentials,
+  User,
+  UserRole,
+  mapBackendRoleToFrontend,
+  mapFrontendRoleToBackend
+} from "@/redux/slices/authSlice";
+import {
+  useLoginMutation,
+  useRegisterMutation,
+  useGetAllUsersQuery,
+  useUpdateUserRoleMutation,
+  useDeleteUserMutation
+} from "@/redux/api/authApi";
 
-export type UserRole = "Admin" | "Project Manager" | "Team Member";
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-}
+const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "https://sptc-system-backend.vercel.app/api/v1";
 
 interface AuthContextType {
   user: User | null;
@@ -23,181 +32,147 @@ interface AuthContextType {
   demoLogin: (role: UserRole) => void;
   logout: () => void;
   updateUserRole: (userId: string, newRole: UserRole) => void;
+  deleteUser: (userId: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const DEMO_USERS: Record<UserRole, User & { passwordHash: string }> = {
-  Admin: {
-    id: "demo-admin-id",
-    name: "Alex Carter (Admin)",
-    email: "admin@sptc.com",
-    role: "Admin",
-    passwordHash: "admin123"
-  },
-  "Project Manager": {
-    id: "demo-pm-id",
-    name: "Sarah Miller (PM)",
-    email: "manager@sptc.com",
-    role: "Project Manager",
-    passwordHash: "manager123"
-  },
-  "Team Member": {
-    id: "demo-member-id",
-    name: "John Doe (Developer)",
-    email: "member@sptc.com",
-    role: "Team Member",
-    passwordHash: "member123"
-  }
-};
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
   const router = useRouter();
+  
+  const { user, token } = useSelector((state: RootState) => state.auth);
+  const [loading, setLoading] = useState(true);
+
+  const [loginMutation] = useLoginMutation();
+  const [registerMutation] = useRegisterMutation();
+  const [updateUserRoleMutation] = useUpdateUserRoleMutation();
+  const [deleteUserMutation] = useDeleteUserMutation();
+
+  // RTK Query hook retrieves user list and automatically invalidates/refetches
+  const { data: usersResponse } = useGetAllUsersQuery(undefined, {
+    skip: !token || user?.role !== "Admin",
+  });
 
   useEffect(() => {
-    // Load user session from localStorage
-    const savedUser = localStorage.getItem("sptc-user");
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        localStorage.removeItem("sptc-user");
-      }
-    }
-    
-    // Load registered users if not exists (seed default accounts)
-    const storedUsers = localStorage.getItem("sptc-registered-users");
-    let usersList = [];
-    if (!storedUsers) {
-      const seeded = Object.values(DEMO_USERS);
-      localStorage.setItem("sptc-registered-users", JSON.stringify(seeded));
-      usersList = seeded;
-    } else {
-      try {
-        usersList = JSON.parse(storedUsers);
-      } catch (e) {
-        usersList = Object.values(DEMO_USERS);
-        localStorage.setItem("sptc-registered-users", JSON.stringify(usersList));
-      }
-    }
-
-    // Set users list in state (excluding sensitive fields like passwordHash if present)
-    setUsers(usersList.map(({ passwordHash, ...u }: any) => u));
-    
     setLoading(false);
   }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    // Read from stored users in localStorage
-    const storedUsersJson = localStorage.getItem("sptc-registered-users");
-    let usersList = storedUsersJson ? JSON.parse(storedUsersJson) : Object.values(DEMO_USERS);
-    
-    const matchedUser = usersList.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
-    
-    if (!matchedUser) {
-      return { success: false, error: "Invalid email or password." };
+    try {
+      const response = await loginMutation({ email, password }).unwrap();
+      const { accessToken } = response.data.result;
+      
+      // Fetch user profile
+      const meResponse = await fetch(`${BASE_API}/users/me`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+      
+      const meData = await meResponse.json();
+      if (!meResponse.ok || !meData.success) {
+        return { success: false, error: "Failed to retrieve user profile." };
+      }
+      
+      const profile = meData.data;
+      const loggedUser: User = {
+        id: profile.id,
+        name: profile.name,
+        email: profile.email,
+        role: mapBackendRoleToFrontend(profile.role)
+      };
+      
+      dispatch(setCredentials({ user: loggedUser, token: accessToken }));
+      router.push("/");
+      return { success: true };
+    } catch (err: any) {
+      console.error("Login error:", err);
+      return { success: false, error: err.data?.message || err.message || "Invalid email or password." };
     }
-    
-    // For demo purposes, we match against seeded passwordHash, or default to "password" if they registered.
-    const expectedPassword = matchedUser.passwordHash || "password123";
-    if (password !== expectedPassword) {
-      return { success: false, error: "Invalid email or password." };
-    }
-    
-    // Exclude passwordHash from state
-    const { passwordHash, ...userSession } = matchedUser;
-    setUser(userSession);
-    localStorage.setItem("sptc-user", JSON.stringify(userSession));
-    router.push("/");
-    return { success: true };
   };
 
   const register = async (name: string, email: string, password: string, role: UserRole): Promise<{ success: boolean; error?: string }> => {
-    const storedUsersJson = localStorage.getItem("sptc-registered-users");
-    let usersList = storedUsersJson ? JSON.parse(storedUsersJson) : Object.values(DEMO_USERS);
-    
-    const exists = usersList.some((u: any) => u.email.toLowerCase() === email.toLowerCase());
-    if (exists) {
-      return { success: false, error: "Email already registered." };
+    try {
+      const backendRole = mapFrontendRoleToBackend(role);
+      const response = await registerMutation({
+        name,
+        email,
+        password,
+        role: backendRole
+      }).unwrap();
+      
+      if (response.success) {
+        return { success: true };
+      }
+      return { success: false, error: response.message || "Registration failed." };
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      return { success: false, error: err.data?.message || err.message || "Registration failed." };
     }
-    
-    const newUser = {
-      id: `user-${Date.now()}`,
-      name,
-      email,
-      role,
-      passwordHash: password // Mock hashing by saving plain password
-    };
-    
-    usersList.push(newUser);
-    localStorage.setItem("sptc-registered-users", JSON.stringify(usersList));
-    
-    // Sync state
-    setUsers(usersList.map(({ passwordHash, ...u }: any) => u));
-    
-    // Automatically log in
-    const { passwordHash, ...userSession } = newUser;
-    setUser(userSession);
-    localStorage.setItem("sptc-user", JSON.stringify(userSession));
-    router.push("/");
-    return { success: true };
   };
 
-  const demoLogin = (role: UserRole) => {
-    const demoUser = DEMO_USERS[role];
-    if (demoUser) {
-      const { passwordHash, ...userSession } = demoUser;
-      setUser(userSession);
-      localStorage.setItem("sptc-user", JSON.stringify(userSession));
-      router.push("/");
-    }
+  const demoLogin = async (role: UserRole) => {
+    let email = "member@gmail.com";
+    if (role === "Admin") email = "admin@gmail.com";
+    else if (role === "Project Manager") email = "pm@gmail.com";
+    
+    await login(email, "123456");
   };
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem("sptc-user");
+    dispatch(clearCredentials());
     router.push("/login");
   };
 
-  const updateUserRole = (userId: string, newRole: UserRole) => {
-    const storedUsersJson = localStorage.getItem("sptc-registered-users");
-    let usersList = storedUsersJson ? JSON.parse(storedUsersJson) : Object.values(DEMO_USERS);
-    
-    const targetUserIdx = usersList.findIndex((u: any) => u.id === userId);
-    if (targetUserIdx === -1) return;
-    
-    const oldRole = usersList[targetUserIdx].role;
-    usersList[targetUserIdx].role = newRole;
-    
-    localStorage.setItem("sptc-registered-users", JSON.stringify(usersList));
-    setUsers(usersList.map(({ passwordHash, ...u }: any) => u));
-    
-    // If the updated user is the currently logged in user, update the state and session
-    if (user && user.id === userId) {
-      const updatedUser = { ...user, role: newRole };
-      setUser(updatedUser);
-      localStorage.setItem("sptc-user", JSON.stringify(updatedUser));
+  const updateUserRole = async (userId: string, newRole: UserRole) => {
+    try {
+      const backendRole = mapFrontendRoleToBackend(newRole);
+      await updateUserRoleMutation({ userId, role: backendRole }).unwrap();
+      
+      // If the updated user is the currently logged in user, update the store credentials
+      if (user && user.id === userId) {
+        const updatedUser = { ...user, role: newRole };
+        dispatch(setCredentials({ user: updatedUser, token: token! }));
+      }
+    } catch (err) {
+      console.error("Failed to update user role:", err);
     }
-    
-    // Log the role change
-    logActivity(`Admin changed role of ${usersList[targetUserIdx].name} (${usersList[targetUserIdx].email}) from ${oldRole} to ${newRole}`);
   };
+
+  const deleteUser = async (userId: string): Promise<boolean> => {
+    try {
+      const response = await deleteUserMutation(userId).unwrap();
+      return !!response?.success;
+    } catch (err) {
+      console.error("Failed to delete user:", err);
+      return false;
+    }
+  };
+
+  // Map users list from the backend structure to frontend structure
+  const backendUsers = usersResponse?.data?.data || [];
+  const mappedUsers: User[] = backendUsers.map((u: any) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: mapBackendRoleToFrontend(u.role)
+  }));
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        users,
-        isAuthenticated: !!user,
+        users: mappedUsers,
+        isAuthenticated: !!token,
         loading,
         login,
         register,
         demoLogin,
         logout,
-        updateUserRole
+        updateUserRole,
+        deleteUser
       }}
     >
       {children}
@@ -212,3 +187,4 @@ export function useAuth() {
   }
   return context;
 }
+export type { UserRole };

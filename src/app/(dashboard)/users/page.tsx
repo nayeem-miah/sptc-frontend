@@ -4,9 +4,15 @@ import React, { useState } from "react";
 import { useAuth, UserRole } from "@/context/AuthContext";
 
 export default function UserManagementPage() {
-  const { user, users, updateUserRole } = useAuth();
+  const { user, users, updateUserRole, deleteUser } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // Custom Delete Modal states
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   if (!user) return null;
 
@@ -41,6 +47,31 @@ export default function UserManagementPage() {
     setTimeout(() => {
       setSuccessMessage("");
     }, 4000);
+  };
+
+  const handleDeleteClick = (userId: string, targetName: string) => {
+    setUserToDelete({ id: userId, name: targetName });
+    setIsConfirmModalOpen(true);
+  };
+
+  const confirmDeleteAction = async () => {
+    if (!userToDelete) return;
+    setIsDeleting(true);
+    const success = await deleteUser(userToDelete.id);
+    setIsDeleting(false);
+    setIsConfirmModalOpen(false);
+    if (success) {
+      setSuccessMessage(`Successfully deleted user ${userToDelete.name}`);
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 4000);
+    } else {
+      setErrorMessage(`Failed to delete user ${userToDelete.name}. Please try again.`);
+      setTimeout(() => {
+        setErrorMessage("");
+      }, 4000);
+    }
+    setUserToDelete(null);
   };
 
   return (
@@ -104,6 +135,28 @@ export default function UserManagementPage() {
         </div>
       )}
 
+      {/* Error Notification */}
+      {errorMessage && (
+        <div className="alert alert-danger" style={{ marginTop: "20px", padding: "12px 16px", display: "flex", alignItems: "center", gap: "8px" }}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" x2="12" y1="8" y2="12" />
+            <line x1="12" x2="12.01" y1="16" y2="16" />
+          </svg>
+          <span style={{ fontSize: "13px", fontWeight: "500" }}>{errorMessage}</span>
+        </div>
+      )}
+
       {/* Actions / Filter row */}
       <div className="filters-row" style={{ marginTop: "24px", justifyContent: "space-between" }}>
         <div className="search-input-wrapper" style={{ maxWidth: "360px" }}>
@@ -138,13 +191,14 @@ export default function UserManagementPage() {
               <th>User Name</th>
               <th>Email Address</th>
               <th>System Role</th>
-              <th style={{ width: "220px" }}>Role Access Permissions</th>
+              <th style={{ width: "200px" }}>Role Access Permissions</th>
+              <th style={{ width: "80px", textAlign: "center" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredUsers.length === 0 ? (
               <tr>
-                <td colSpan={4} style={{ textAlign: "center", color: "var(--muted)", padding: "24px" }}>
+                <td colSpan={5} style={{ textAlign: "center", color: "var(--muted)", padding: "24px" }}>
                   No users matched your search criteria.
                 </td>
               </tr>
@@ -222,6 +276,35 @@ export default function UserManagementPage() {
                         <option value="Team Member">Team Member</option>
                       </select>
                     </td>
+                    <td style={{ textAlign: "center" }}>
+                      <button
+                        onClick={() => handleDeleteClick(item.id, item.name)}
+                        className="action-btn action-btn-danger"
+                        disabled={isSelf}
+                        title={isSelf ? "You cannot delete yourself" : `Delete user ${item.name}`}
+                        style={{
+                          opacity: isSelf ? 0.4 : 1,
+                          cursor: isSelf ? "not-allowed" : "pointer",
+                          backgroundColor: "transparent",
+                          borderColor: isSelf ? "var(--border)" : "var(--danger-border)",
+                          color: isSelf ? "var(--muted)" : "var(--danger)",
+                        }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M3 6h18" />
+                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                        </svg>
+                      </button>
+                    </td>
                   </tr>
                 );
               })
@@ -229,6 +312,50 @@ export default function UserManagementPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Custom Delete Confirmation Modal */}
+      {isConfirmModalOpen && userToDelete && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: "400px" }}>
+            <div className="modal-header">
+              <h3 className="modal-title" style={{ color: "var(--danger)" }}>Confirm Delete User</h3>
+              <button
+                className="modal-close-btn"
+                onClick={() => { setIsConfirmModalOpen(false); setUserToDelete(null); }}
+                disabled={isDeleting}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div style={{ margin: "16px 0", fontSize: "14px", color: "var(--foreground)" }}>
+              <p>Are you sure you want to permanently delete user <strong>{userToDelete.name}</strong>?</p>
+              <p style={{ marginTop: "8px", fontSize: "12px", color: "var(--muted)" }}>This action cannot be undone.</p>
+            </div>
+
+            <div className="modal-footer" style={{ gap: "10px" }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ width: "auto" }}
+                onClick={() => { setIsConfirmModalOpen(false); setUserToDelete(null); }}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ width: "auto", backgroundColor: "var(--danger)", borderColor: "var(--danger)", color: "#ffffff" }}
+                onClick={confirmDeleteAction}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Deleting..." : "Delete User"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

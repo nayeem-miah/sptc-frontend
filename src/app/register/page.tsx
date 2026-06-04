@@ -3,10 +3,12 @@
 import ThemeToggle from "@/components/ThemeToggle";
 import { useAuth, UserRole } from "@/context/AuthContext";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 export default function RegisterPage() {
   const { register } = useAuth();
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole>("Team Member");
@@ -52,7 +54,9 @@ export default function RegisterPage() {
     setIsSubmitting(true);
     try {
       const result = await register(name, email, password, role);
-      if (!result.success) {
+      if (result.success) {
+        router.push("/login");
+      } else {
         setGeneralError(result.error || "Registration failed. Try a different email.");
       }
     } catch (err) {
