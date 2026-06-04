@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SPTC - Smart Project & Task Collaboration Dashboard
 
-## Getting Started
+SPTC (Smart Project & Task Collaboration) is a premium, high-fidelity project management and task assignment dashboard built using **Next.js 16 (App Router)** and **Redux Toolkit Query (RTK Query)**. It connects to a live backend service to offer real-time synchronization, team management, and granular permission controls.
 
-First, run the development server:
+- **Live Frontend**: [https://sptc-frontend.vercel.app](https://sptc-frontend.vercel.app)
+- **Live Backend API**: `https://sptc-system-backend.vercel.app/api/v1`
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 🎨 Design System & Aesthetics
+
+SPTC is designed with a premium, state-of-the-art visual style featuring:
+- **Harmonious Dark Theme**: Sleek dark backgrounds with customized monochrome/gray layouts.
+- **Glassmorphism & Micro-animations**: Soft shadows, responsive layouts, hover state highlights, and smooth state transitions.
+- **Visual Status Tags**: Custom indicators representing Task Priorities (`High`, `Medium`, `Low`) and Statuses (`Todo`, `In Progress`, `Completed`).
+- **Interactive Custom Modals**: Clean confirmation overlays for critical actions like deletion and user removal instead of generic browser prompt alerts.
+
+---
+
+## 🔑 Role-Based Access Control (RBAC)
+
+The dashboard enforces three clear scopes of permissions:
+1. **Admin**:
+   - Full management of projects (Create, Edit, Delete).
+   - Full management of tasks (Create, Edit, Delete, Reassign).
+   - Complete access to the **User Management Panel** (`/users`) to change system roles (Admin, Project Manager, Team Member) and delete user accounts.
+2. **Project Manager**:
+   - Create and edit projects.
+   - Manage team membership within projects (Add/Remove members on details page).
+   - Create, edit, and delete project tasks, and reassign them to team members.
+3. **Team Member**:
+   - View assigned projects and task boards.
+   - Quick-toggle task progress (Todo, In Progress, Completed) for tasks assigned to them.
+
+---
+
+## 📁 System Architecture & Directories
+
+```
+src/
+├── app/                      # Next.js App Router (16.x)
+│   ├── (dashboard)/          # Dashboard Route Groups
+│   │   ├── page.tsx          # Home Overview (dynamic metrics & workload charts)
+│   │   ├── projects/         # Projects directory & details views
+│   │   ├── tasks/            # Global tasks listing table
+│   │   ├── users/            # Admin User Management table
+│   │   └── activity-log/     # System events activity stream log
+│   │   login/                # User login page
+│   │   register/             # User registration page
+│   └── globals.css           # Global custom stylesheet & dark mode variables
+├── components/               # Resilient, shared component hierarchy
+│   ├── DashboardLayout.tsx   # Sidebar navigation and view shell
+│   ├── ProjectTable.tsx      # Clickable project list table
+│   ├── CreateProjectModal.tsx# Date-safe project creator modal
+│   └── CreateTaskModal.tsx   # Dynamic task creation and assignment modal
+├── context/                  # Authentication context provider
+│   └── AuthContext.tsx       # Auth status, user credentials, and users list caching
+├── redux/                    # Redux Toolkit global state store
+│   ├── api/                  # RTK Query API endpoints
+│   │   ├── baseApi.ts        # API configuration with JWT Bearer Token injector
+│   │   ├── authApi.ts        # Authentication & users database mutations
+│   │   ├── projectApi.ts     # Project queries & member assignment mutations
+│   │   └── taskApi.ts        # Task queries & CRUD mutations with converters
+│   └── slices/               # Local auth credentials slice
+└── utils/                    # Loggers & static helper functions
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ⚡ Key Technical Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. RTK Query Sync & Cache Invalidation
+The application uses a centralized API slice (`baseApi.ts`) that manages tag invalidations (`User`, `Project`, `Task`, `Activity`) for live updates. Mutating a task or adding a project member automatically triggers a refetch of related queries.
 
-## Learn More
+### 2. Bidirectional Enum Mappers
+Automatic converters bridge differences between backend database enums (`TODO`, `IN_PROGRESS`, `COMPLETED` / `HIGH`, `MEDIUM`, `LOW`) and frontend display states (`Todo`, `In Progress`, `Completed` / `High`, `Medium`, `Low`).
 
-To learn more about Next.js, take a look at the following resources:
+### 3. Date Overflow Protection
+Form inputs validate date deadlines to ensure no year beyond `2100` is submitted, preventing MongoDB/Prisma database datetime overflow crashes.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 4. Interactive Row Actions
+Directory tables (projects and tasks) feature fully clickable rows for quick navigation, with child action buttons equipped with `event.stopPropagation()` to prevent nested event triggers.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## ⚙️ Environment Configuration
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Create a `.env.local` file in the root directory to customize the backend endpoint:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```env
+NEXT_PUBLIC_BASE_API=https://sptc-system-backend.vercel.app/api/v1
+```
+
+---
+
+## 🚀 Getting Started
+
+### 1. Install Dependencies
+```bash
+npm install
+```
+
+### 2. Run the Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+
+### 3. Build for Production
+```bash
+npm run build
+```
+The optimized production bundle will build inside the `.next` directory.
