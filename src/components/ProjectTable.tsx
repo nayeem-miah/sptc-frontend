@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Project, Task } from "@/types";
 
 interface ProjectTableProps {
@@ -26,6 +28,7 @@ export default function ProjectTable({
   onOpenCreateProject,
   todayDateString
 }: ProjectTableProps) {
+  const router = useRouter();
   const filteredProjects = projects.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.description.toLowerCase().includes(searchQuery.toLowerCase())
@@ -91,9 +94,20 @@ export default function ProjectTable({
                 const completedCount = projTasks.filter((t) => t.status === "Completed").length;
 
                 return (
-                  <tr key={proj.id}>
+                  <tr
+                    key={proj.id}
+                    className="clickable-row"
+                    onClick={() => router.push(`/projects/${proj.id}`)}
+                  >
                     <td>
-                      <div style={{ fontWeight: "500" }}>{proj.name}</div>
+                      <span
+                        style={{
+                          fontWeight: "500",
+                          color: "var(--foreground)",
+                        }}
+                      >
+                        {proj.name}
+                      </span>
                       <div style={{ fontSize: "11px", color: "var(--muted)", marginTop: "2px" }}>
                         {proj.description}
                       </div>
@@ -125,7 +139,10 @@ export default function ProjectTable({
                     {canDeleteProjects && (
                       <td>
                         <button
-                          onClick={() => onDeleteProject(proj.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteProject(proj.id);
+                          }}
                           className="action-btn action-btn-danger"
                           title="Delete Project"
                         >

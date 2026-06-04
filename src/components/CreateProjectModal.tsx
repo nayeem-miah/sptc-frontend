@@ -26,12 +26,34 @@ export default function CreateProjectModal({
   const [projDesc, setProjDesc] = useState("");
   const [projDeadline, setProjDeadline] = useState("");
 
+  const todayDateString = new Date().toISOString().split("T")[0];
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!projName.trim() || !projDeadline) {
       setValidationError("Please fill out all required fields.");
+      return;
+    }
+
+    const selectedDate = new Date(projDeadline);
+    const selectedYear = selectedDate.getFullYear();
+
+    if (isNaN(selectedDate.getTime())) {
+      setValidationError("Please enter a valid date.");
+      return;
+    }
+
+    if (selectedYear > 2100) {
+      setValidationError("Please select a deadline before year 2100.");
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selectedDate < today) {
+      setValidationError("Deadline cannot be in the past.");
       return;
     }
 
@@ -101,6 +123,7 @@ export default function CreateProjectModal({
               className="form-input"
               value={projDeadline}
               onChange={(e) => setProjDeadline(e.target.value)}
+              min={todayDateString}
               required
             />
           </div>

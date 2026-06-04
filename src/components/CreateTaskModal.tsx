@@ -72,6 +72,19 @@ export default function CreateTaskModal({
       return;
     }
 
+    const selectedDate = new Date(taskDueDate);
+    const selectedYear = selectedDate.getFullYear();
+
+    if (isNaN(selectedDate.getTime())) {
+      setValidationError("Please enter a valid date.");
+      return;
+    }
+
+    if (selectedYear > 2100) {
+      setValidationError("Please select a deadline before year 2100.");
+      return;
+    }
+
     onSubmit({
       title: taskTitle,
       description: taskDesc,
