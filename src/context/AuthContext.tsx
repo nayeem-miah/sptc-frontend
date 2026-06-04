@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { logActivity } from "@/utils/activityLogger";
 
 export type UserRole = "Admin" | "Project Manager" | "Team Member";
 
@@ -14,12 +15,14 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
+  users: User[];
   isAuthenticated: boolean;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (name: string, email: string, password: string, role: UserRole) => Promise<{ success: boolean; error?: string }>;
   demoLogin: (role: UserRole) => void;
   logout: () => void;
+  updateUserRole: (userId: string, newRole: UserRole) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,6 +53,7 @@ const DEMO_USERS: Record<UserRole, User & { passwordHash: string }> = {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -66,9 +70,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // Load registered users if not exists (seed default accounts)
     const storedUsers = localStorage.getItem("sptc-registered-users");
+    let usersList = [];
     if (!storedUsers) {
-      localStorage.setItem("sptc-registered-users", JSON.stringify(Object.values(DEMO_USERS)));
+      const seeded = Object.values(DEMO_USERS);
+      localStorage.setItem("sptc-registered-users", JSON.stringify(seeded));
+      usersList = seeded;
+    } else {
+      try {
+        usersList = JSON.parse(storedUsers);
+      } catch (e) {
+        usersList = Object.values(DEMO_USERS);
+        localStorage.setItem("sptc-registered-users", JSON.stringify(usersList));
+      }
     }
+
+    // Set users list in state (excluding sensitive fields like passwordHash if present)
+    setUsers(usersList.map(({ passwordHash, ...u }: any) => u));
     
     setLoading(false);
   }, []);
@@ -118,6 +135,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     usersList.push(newUser);
     localStorage.setItem("sptc-registered-users", JSON.stringify(usersList));
     
+    // Sync state
+    setUsers(usersList.map(({ passwordHash, ...u }: any) => u));
+    
     // Automatically log in
     const { passwordHash, ...userSession } = newUser;
     setUser(userSession);
@@ -142,16 +162,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push("/login");
   };
 
+  const updateUserRole = (userId: string, newRole: UserRole) => {
+    const storedUsersJson = localStorage.getItem("sptc-registered-users");
+    let usersList = storedUsersJson ? JSON.parse(storedUsersJson) : Object.values(DEMO_USERS);
+    
+    const targetUserIdx = usersList.findIndex((u: any) => u.id === userId);
+    if (targetUserIdx === -1) return;
+    
+    const oldRole = usersList[targetUserIdx].role;
+    usersList[targetUserIdx].role = newRole;
+    
+    localStorage.setItem("sptc-registered-users", JSON.stringify(usersList));
+    setUsers(usersList.map(({ passwordHash, ...u }: any) => u));
+    
+    // If the updated user is the currently logged in user, update the state and session
+    if (user && user.id === userId) {
+      const updatedUser = { ...user, role: newRole };
+      setUser(updatedUser);
+      localStorage.setItem("sptc-user", JSON.stringify(updatedUser));
+    }
+    
+    // Log the role change
+    logActivity(`Admin changed role of ${usersList[targetUserIdx].name} (${usersList[targetUserIdx].email}) from ${oldRole} to ${newRole}`);
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
+        users,
         isAuthenticated: !!user,
         loading,
         login,
         register,
         demoLogin,
-        logout
+        logout,
+        updateUserRole
       }}
     >
       {children}

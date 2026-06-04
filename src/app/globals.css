@@ -1040,4 +1040,23 @@ html, body {
   }
 }
 
+/* Custom status tags for user roles */
+.tag-status-admin {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+
+.tag-status-project-manager {
+  background-color: var(--secondary);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+.tag-status-team-member {
+  background-color: var(--secondary);
+  color: var(--muted);
+  border-color: var(--border);
+}
+
 

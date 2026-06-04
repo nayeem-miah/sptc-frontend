@@ -25,7 +25,6 @@ export default function CreateProjectModal({
   const [projName, setProjName] = useState("");
   const [projDesc, setProjDesc] = useState("");
   const [projDeadline, setProjDeadline] = useState("");
-  const [projStatus, setProjStatus] = useState<"Active" | "Completed" | "On Hold">("Active");
 
   if (!isOpen) return null;
 
@@ -40,14 +39,13 @@ export default function CreateProjectModal({
       name: projName,
       description: projDesc,
       deadline: projDeadline,
-      status: projStatus
+      status: "Active"
     });
 
     // Reset Form
     setProjName("");
     setProjDesc("");
     setProjDeadline("");
-    setProjStatus("Active");
   };
 
   return (
@@ -107,21 +105,7 @@ export default function CreateProjectModal({
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="proj-status">
-              Status
-            </label>
-            <select
-              id="proj-status"
-              className="form-input form-select"
-              value={projStatus}
-              onChange={(e) => setProjStatus(e.target.value as any)}
-            >
-              <option value="Active">Active</option>
-              <option value="On Hold">On Hold</option>
-              <option value="Completed">Completed</option>
-            </select>
-          </div>
+
 
           <div className="modal-footer">
             <button

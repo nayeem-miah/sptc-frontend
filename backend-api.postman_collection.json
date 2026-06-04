@@ -1,0 +1,1705 @@
+{
+  "info": {
+    "_postman_id": "2fadb940-9ac5-4c65-8fce-04d6c0ca5832",
+    "name": "niazibeaters api",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "46499415",
+    "_collection_link": "https://go.postman.co/collection/46499415-2fadb940-9ac5-4c65-8fce-04d6c0ca5832?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "user",
+      "item": [
+        {
+          "name": "create",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n \"name\": \" nayeem\",\r\n  \"email\": \"nayeem5113a@gmail.com\",\r\n  \"password\": \"123456\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "create",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n \"name\": \"MedSupply user\",\r\n  \"email\": \"usernayeem@gmail.com\",\r\n  \"password\": \"123456\"\r\n}\r\n",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/users",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "users"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "432"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"1b0-lmrXTZnpwJexhplPNf6FPJJ5S6c\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 19 Jan 2026 04:14:30 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": "{\n    \"statusCode\": 200,\n    \"success\": true,\n    \"message\": \"user created successfully\",\n    \"data\": {\n        \"id\": \"696dafa621f09e4db117790a\",\n        \"name\": \"MedSupply user\",\n        \"password\": \"$2b$10$yL7InWlxuS4C48mh5hHvQOka1yFPjPi/eyqwVbzrLRpnHyGuOPMkO\",\n        \"email\": \"usernayeem@gmail.com\",\n        \"role\": \"USER\",\n        \"profilePicture\": \"https://i.ibb.co.com/q2gwGfV/356306451-54b19ada-d53e-4ee9-8882-9dfed1bf1396.jpg\",\n        \"createdAt\": \"2026-01-19T04:14:30.705Z\",\n        \"updatedAt\": \"2026-01-19T04:14:30.705Z\"\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "get all users",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTcwNzQzZDhiY2M1ZTMyNjcxYzVjYTgiLCJlbWFpbCI6InNoYWZpcXVsLmlzbGFtMjUwMjE5OThAZ21haWwuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzY5MDgwNTIyLCJleHAiOjE3Njk2ODUzMjJ9.pwvEudjb3eC1fxVi-JlA0U1ZqshzACPzM5_L5uQ7kJI",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "get all users",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/users",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "users"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "615"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"267-UwO5yDlhWL/U8Mth5d6VA+cP1Sw\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 19 Jan 2026 04:40:27 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": "{\n    \"statusCode\": 200,\n    \"success\": true,\n    \"message\": \"users retrieved successfully\",\n    \"data\": {\n        \"meta\": {\n            \"page\": 1,\n            \"limit\": 10,\n            \"total\": 2,\n            \"totalPage\": 1\n        },\n        \"data\": [\n            {\n                \"id\": \"696db1f95fc659fcad8042ab\",\n                \"name\": \"Admin\",\n                \"email\": \"admin@gmail.com\",\n                \"role\": \"ADMIN\",\n                \"profilePicture\": null,\n                \"createdAt\": \"2026-01-19T04:24:25.388Z\",\n                \"updatedAt\": \"2026-01-19T04:24:25.388Z\"\n            },\n            {\n                \"id\": \"696dafa621f09e4db117790a\",\n                \"name\": \"MedSupply user\",\n                \"email\": \"usernayeem@gmail.com\",\n                \"role\": \"USER\",\n                \"profilePicture\": \"https://i.ibb.co.com/q2gwGfV/356306451-54b19ada-d53e-4ee9-8882-9dfed1bf1396.jpg\",\n                \"createdAt\": \"2026-01-19T04:14:30.705Z\",\n                \"updatedAt\": \"2026-01-19T04:14:30.705Z\"\n            }\n        ]\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "get me",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "get me",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/users/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "users",
+                    "me"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "352"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"160-fC37H+83AmXy6cnEVIGlfcIQFIU\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 19 Jan 2026 04:43:19 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": "{\n    \"statusCode\": 200,\n    \"success\": true,\n    \"message\": \"Current user retrieved successfully\",\n    \"data\": {\n        \"id\": \"696db1f95fc659fcad8042ab\",\n        \"name\": \"Admin\",\n        \"password\": \"$2b$10$G983ge8zCQhVa4JZFU70NeztLLPNT.QG8MFg6DrClCtKlgYlU8f8O\",\n        \"email\": \"admin@gmail.com\",\n        \"role\": \"ADMIN\",\n        \"profilePicture\": null,\n        \"createdAt\": \"2026-01-19T04:24:25.388Z\",\n        \"updatedAt\": \"2026-01-19T04:24:25.388Z\"\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "get single user by id",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":userId"
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "69d9dc8ea2e2270e8027eecc"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "get single user by id",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/users/696dafa621f09e4db117790a",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "users",
+                    "696dafa621f09e4db117790a"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "278"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"116-k8ZFrv+hs6RYhw3+PAx7sZESftI\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 19 Jan 2026 04:46:09 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": "{\n    \"statusCode\": 200,\n    \"success\": true,\n    \"message\": \"Current user retrieved successfully\",\n    \"data\": {\n        \"id\": \"696db1f95fc659fcad8042ab\",\n        \"name\": \"Admin\",\n        \"email\": \"admin@gmail.com\",\n        \"role\": \"ADMIN\",\n        \"profilePicture\": null,\n        \"createdAt\": \"2026-01-19T04:24:25.388Z\",\n        \"updatedAt\": \"2026-01-19T04:24:25.388Z\"\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "update profile",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "uuid": "d982ed64-5a89-4ce9-99b8-a2d80e55580f",
+                  "src": "/C:/Users/Rakibul Hasan/Pictures/Screenshots/Screenshot 2026-01-23 083143.png",
+                  "disabled": true
+                },
+                {
+                  "key": "data",
+                  "value": "{\n    \"name\": \"Nayeem Miah\",\n\"phone\" : \"01345678903\",\n    \"oldPassword\": \"123456\",\n    \"newPassword\": \"123456\"\n\n}",
+                  "type": "text",
+                  "uuid": "97b4b970-c46c-4e3c-b4fc-2b53b4041d0f"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/update-profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "update-profile"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "update profile",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "uuid": "d982ed64-5a89-4ce9-99b8-a2d80e55580f",
+                      "src": [
+                        "/C:/Users/Nayeem/Pictures/Screenshots/Screenshot 2026-01-21 113228.png"
+                      ]
+                    },
+                    {
+                      "key": "data",
+                      "value": "{\n    \"name\": \"Nayeem Miah\",\n\"phone\" : \"01345678903\",\n    \"oldPassword\": \"1234567\",\n    \"newPassword\": \"123456\"\n\n}",
+                      "type": "text",
+                      "uuid": "97b4b970-c46c-4e3c-b4fc-2b53b4041d0f"
+                    }
+                  ],
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:5000/api/v1/users/update-profile",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "5000",
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "update-profile"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "466"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"1d2-bJfwAA51P0jnNS/JrCuUzgd17eI\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Fri, 23 Jan 2026 02:46:27 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": "{\n    \"statusCode\": 201,\n    \"success\": true,\n    \"message\": \"User profile updated successfully\",\n    \"data\": {\n        \"id\": \"696ef154d3e6e8179d4e9632\",\n        \"name\": \"Nayeem Miah\",\n        \"password\": \"$2b$10$srnPVTju0C3CUW6/quG64OtuDG.ykNCwBcZgL16h5nUZWK80kRmIi\",\n        \"email\": \"nayeem5113a@gmail.com\",\n        \"role\": \"USER\",\n        \"profilePicture\": \"https://res.cloudinary.com/dgk8lgdzb/image/upload/v1769136386/uploads/av221r3paqdvgydfpyg0.png\",\n        \"phone\": null,\n        \"createdAt\": \"2026-01-20T03:07:00.407Z\",\n        \"updatedAt\": \"2026-01-23T02:46:26.958Z\"\n    }\n}"
+            },
+            {
+              "name": "update profile",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "uuid": "d982ed64-5a89-4ce9-99b8-a2d80e55580f",
+                      "src": [
+                        "/C:/Users/Rakibul Hasan/Pictures/Screenshots/Screenshot 2026-01-23 083143.png"
+                      ]
+                    },
+                    {
+                      "key": "data",
+                      "value": "{\n    \"name\": \"Nayeem Miah\",\n\"phone\" : \"01345678903\",\n    \"oldPassword\": \"1234567\",\n    \"newPassword\": \"123456\"\n\n}",
+                      "type": "text",
+                      "uuid": "97b4b970-c46c-4e3c-b4fc-2b53b4041d0f"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/users/update-profile",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "users",
+                    "update-profile"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "Text",
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "378"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"17a-KmhuxjFzk1aJ5W/XtERoLdVPoaU\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 24 Jan 2026 10:54:22 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"statusCode\": 201,\n    \"success\": true,\n    \"message\": \"User profile updated successfully\",\n    \"data\": {\n        \"id\": \"696db9cb25c3196630a968a9\",\n        \"name\": \"Nayeem Miah\",\n        \"password\": \"$2b$10$rdLoaE8IIz1P1ug75NSmLuHOnh.cKgcE1Ka2Vfebh58TLd2vSf0qC\",\n        \"email\": \"admin@gmail.com\",\n        \"role\": \"ADMIN\",\n        \"profilePicture\": null,\n        \"phone\": \"01345678903\",\n        \"createdAt\": \"2026-01-19T04:57:47.522Z\",\n        \"updatedAt\": \"2026-01-24T10:54:22.591Z\"\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "delete",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "69d9dc8ea2e2270e8027eecc"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "delete",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/users/696dafa621f09e4db117790a",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "users",
+                    "696dafa621f09e4db117790a"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "429"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"1ad-04nRuCm56wqmnll2Mr/8eBQv7CM\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 19 Jan 2026 04:58:09 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": "{\n    \"statusCode\": 200,\n    \"success\": true,\n    \"message\": \"User deleted successfully\",\n    \"data\": {\n        \"id\": \"696dafa621f09e4db117790a\",\n        \"name\": \"Nayeem Miah\",\n        \"password\": \"$2b$10$HQxOEH0vxQDVBcPRF8F3YucBVT4o2XwppDnQp39GM9t4J7aKn5X6C\",\n        \"email\": \"usernayeem@gmail.com\",\n        \"role\": \"USER\",\n        \"profilePicture\": \"https://i.ibb.co.com/q2gwGfV/356306451-54b19ada-d53e-4ee9-8882-9dfed1bf1396.jpg\",\n        \"createdAt\": \"2026-01-19T04:14:30.705Z\",\n        \"updatedAt\": \"2026-01-19T04:53:48.340Z\"\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "update user role",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"role\": \"ADMIN\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/role/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "role",
+                ":userId"
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": ":userId"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "update user role",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"role\": \"ADMIN\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/users/role/6970743d8bcc5e32671c5ca8",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "users",
+                    "role",
+                    "6970743d8bcc5e32671c5ca8"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "444"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"1bc-yBbWZwGZK02rVAqSpJS534QXCmk\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Thu, 22 Jan 2026 08:26:49 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": "{\n    \"statusCode\": 201,\n    \"success\": true,\n    \"message\": \"User role updated successfully\",\n    \"data\": {\n        \"id\": \"6970743d8bcc5e32671c5ca8\",\n        \"name\": \"shafiqul\",\n        \"password\": \"$2b$10$kt07BQgyie2KWpK9hQQwEusDOUysE4KSl1vNL5OsJuJCQmBzOI/1i\",\n        \"email\": \"shafiqul.islam25021998@gmail.com\",\n        \"role\": \"ADMIN\",\n        \"profilePicture\": \"https://i.ibb.co.com/q2gwGfV/356306451-54b19ada-d53e-4ee9-8882-9dfed1bf1396.jpg\",\n        \"createdAt\": \"2026-01-21T06:37:49.725Z\",\n        \"updatedAt\": \"2026-01-22T08:26:49.478Z\"\n    }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    //   \"email\": \"nayeem5113a@gmail.com\",  // user\r\n      \"email\": \"admin@gmail.com\",\r\n      \"password\": \"123456\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "login",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n//   \"email\": \"nayeem2@gmail.com\",\r\n//   \"password\": \"Nayeem123$\"\r\n  \"email\": \"admin@gmail.com\",\r\n  \"password\": \"123456\"\r\n}\r\n",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "Set-Cookie",
+                  "value": "accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTZkYjFmOTVmYzY1OWZjYWQ4MDQyYWIiLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc2ODc5NzMwOCwiZXhwIjoxNzY5NDAyMTA4fQ.tESjdoOSfAwXSqT-tIt7vzVvcDACA7D64d8h61kVI-Q; Max-Age=3600; Path=/; Expires=Mon, 19 Jan 2026 05:35:08 GMT; HttpOnly; Secure; SameSite=None"
+                },
+                {
+                  "key": "Set-Cookie",
+                  "value": "refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTZkYjFmOTVmYzY1OWZjYWQ4MDQyYWIiLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc2ODc5NzMwOCwiZXhwIjoxNzcxMzg5MzA4fQ.XwYCMOO1j-bIxa65DoiiGCNd7_JdZ3Hwpq3NbX6trtI; Max-Age=7776000; Path=/; Expires=Sun, 19 Apr 2026 04:35:08 GMT; HttpOnly; Secure; SameSite=None"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "590"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"24e-6BTFvbCotgs5RR+NJkO5QHc+LJE\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 19 Jan 2026 04:35:08 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": "{\n    \"statusCode\": 201,\n    \"success\": true,\n    \"message\": \"User loggedin successfully!\",\n    \"data\": {\n        \"result\": {\n            \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTZkYjFmOTVmYzY1OWZjYWQ4MDQyYWIiLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc2ODc5NzMwOCwiZXhwIjoxNzY5NDAyMTA4fQ.tESjdoOSfAwXSqT-tIt7vzVvcDACA7D64d8h61kVI-Q\",\n            \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTZkYjFmOTVmYzY1OWZjYWQ4MDQyYWIiLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc2ODc5NzMwOCwiZXhwIjoxNzcxMzg5MzA4fQ.XwYCMOO1j-bIxa65DoiiGCNd7_JdZ3Hwpq3NbX6trtI\"\n        }\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "forget-password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"nayeem5113a@gmail.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "forget-password",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"email\": \"nayeem5113a@gmail.com\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/forgot-password",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "forgot-password"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "Text",
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "99"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"63-Wfa+RkghTuCCW9D1/PmXhLFB6EE\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Tue, 20 Jan 2026 03:37:20 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"statusCode\": 200,\n    \"success\": true,\n    \"message\": \"Check your email for reset password link!\",\n    \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "reset-password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NmVmMTU0ZDNlNmU4MTc5ZDRlOTYzMiIsImVtYWlsIjoibmF5ZWVtNTExM2FAZ21haWwuY29tIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3Njg4ODAyMzcsImV4cCI6MTc2ODg4MDUzN30.B5kyoN3i-vqQv7r5qY3Zz9mIxgHj0XFvFohjnpAIm_c",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"password\": \"123456\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDlkYzhlYTJlMjI3MGU4MDI3ZWVjYyIsImVtYWlsIjoibmF5ZWVtNTExM2FAZ21haWwuY29tIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzU4ODY2NzcsImV4cCI6MTc3NTg4Njk3N30.P0i7oUZ7FWjcVZc7dKb5cUGPs6P_amw25wN0O2QoK_c",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password"
+              ],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDlkYzhlYTJlMjI3MGU4MDI3ZWVjYyIsImVtYWlsIjoibmF5ZWVtNTExM2FAZ21haWwuY29tIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzU4ODY2NzcsImV4cCI6MTc3NTg4Njk3N30.P0i7oUZ7FWjcVZc7dKb5cUGPs6P_amw25wN0O2QoK_c"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "reset-password",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NmVmMTU0ZDNlNmU4MTc5ZDRlOTYzMiIsImVtYWlsIjoibmF5ZWVtNTExM2FAZ21haWwuY29tIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3Njg4ODAyMzcsImV4cCI6MTc2ODg4MDUzN30.B5kyoN3i-vqQv7r5qY3Zz9mIxgHj0XFvFohjnpAIm_c",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"password\": \"123456\"\r\n}\r\n",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/reset-password?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NmVmMTU0ZDNlNmU4MTc5ZDRlOTYzMiIsImVtYWlsIjoibmF5ZWVtNTExM2FAZ21haWwuY29tIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3Njg4ODAyMzcsImV4cCI6MTc2ODg4MDUzN30.B5kyoN3i-vqQv7r5qY3Zz9mIxgHj0XFvFohjnpAIm_c",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "reset-password"
+                  ],
+                  "query": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NmVmMTU0ZDNlNmU4MTc5ZDRlOTYzMiIsImVtYWlsIjoibmF5ZWVtNTExM2FAZ21haWwuY29tIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3Njg4ODAyMzcsImV4cCI6MTc2ODg4MDUzN30.B5kyoN3i-vqQv7r5qY3Zz9mIxgHj0XFvFohjnpAIm_c"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "Text",
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "Access-Control-Allow-Credentials",
+                  "value": "true"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "86"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"56-I2vLRQnYGz2ESFxa3OB4rYH3HM8\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Tue, 20 Jan 2026 03:38:37 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"statusCode\": 200,\n    \"success\": true,\n    \"message\": \"Password reset successfully!\",\n    \"data\": null\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "projects",
+      "item": [
+        {
+          "name": "create project",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"E-Commerce App\",\n  \"description\": \"A scalable online store built with Next.js and Node.js\",\n  \"deadline\": \"2026-12-31T23:59:59.000Z\",\n  \"memberIds\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects"
+              ]
+            }
+          }
+        },
+        {
+          "name": "get all projects",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects?searchTerm=&status=ACTIVE&page=1&limit=10&sortBy=createdAt&sortOrder=desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "searchTerm",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "get project by id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects/:projectId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                ":projectId"
+              ],
+              "variable": [
+                {
+                  "key": "projectId",
+                  "value": "6970743d8bcc5e32671c5ca8"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "update project",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"E-Commerce App Updated\",\n  \"description\": \"An updated description of the e-commerce app.\",\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/projects/:projectId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                ":projectId"
+              ],
+              "variable": [
+                {
+                  "key": "projectId",
+                  "value": "6970743d8bcc5e32671c5ca8"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "delete project",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects/:projectId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                ":projectId"
+              ],
+              "variable": [
+                {
+                  "key": "projectId",
+                  "value": "6970743d8bcc5e32671c5ca8"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "add project member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"memberId\": \"6970743d8bcc5e32671c5ca8\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/projects/:projectId/add-member",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                ":projectId",
+                "add-member"
+              ],
+              "variable": [
+                {
+                  "key": "projectId",
+                  "value": "6970743d8bcc5e32671c5ca8"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "remove project member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"memberId\": \"6970743d8bcc5e32671c5ca8\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/projects/:projectId/remove-member",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                ":projectId",
+                "remove-member"
+              ],
+              "variable": [
+                {
+                  "key": "projectId",
+                  "value": "6970743d8bcc5e32671c5ca8"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "activities",
+      "item": [
+        {
+          "name": "get recent activities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/activities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "activities"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "tasks",
+      "item": [
+        {
+          "name": "create task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Setup API Endpoints\",\n  \"description\": \"Create routing, controllers, and services for tasks\",\n  \"dueDate\": \"2026-12-31T23:59:59.000Z\",\n  \"priority\": \"HIGH\",\n  \"projectId\": \"6970743d8bcc5e32671c5ca8\",\n  \"assignedMemberId\": \"6970743d8bcc5e32671c5ca8\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks"
+              ]
+            }
+          }
+        },
+        {
+          "name": "get all tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?searchTerm=&status=TODO&priority=HIGH&page=1&limit=10&sortBy=dueDate&sortOrder=asc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "searchTerm",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": "TODO"
+                },
+                {
+                  "key": "priority",
+                  "value": "HIGH"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "dueDate"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "asc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "get task by id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/:taskId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                ":taskId"
+              ],
+              "variable": [
+                {
+                  "key": "taskId",
+                  "value": "6970743d8bcc5e32671c5ca8"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "update task",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/:taskId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                ":taskId"
+              ],
+              "variable": [
+                {
+                  "key": "taskId",
+                  "value": "6970743d8bcc5e32671c5ca8"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "delete task",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/:taskId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                ":taskId"
+              ],
+              "variable": [
+                {
+                  "key": "taskId",
+                  "value": "6970743d8bcc5e32671c5ca8"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "dashboard",
+      "item": [
+        {
+          "name": "get dashboard insights",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/insights",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dashboard",
+                "insights"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "",
+      "type": "default"
+    }
+  ]
+}

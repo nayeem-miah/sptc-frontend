@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import Link from "next/link";
-import { useAuth } from "@/context/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useEffect } from "react";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -92,6 +92,32 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <span>Tasks</span>
                 </Link>
               </li>
+               {user.role === "Admin" && (
+                <li>
+                  <Link
+                    href="/users"
+                    className={`sidebar-link ${isActive("/users") ? "sidebar-link-active" : ""}`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    <span>Users</span>
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link
                   href="/activity-log"
@@ -101,6 +127,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <span>Activity Log</span>
                 </Link>
               </li>
+
             </ul>
           </nav>
         </div>

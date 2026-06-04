@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
 import { Project, Task, TEAM_MEMBERS } from "@/types";
+import React, { useEffect, useState } from "react";
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -201,22 +201,6 @@ export default function CreateTaskModal({
               <option value="High">High</option>
               <option value="Medium">Medium</option>
               <option value="Low">Low</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="task-status">
-              Status
-            </label>
-            <select
-              id="task-status"
-              className="form-input form-select"
-              value={taskStatus}
-              onChange={(e) => setTaskStatus(e.target.value as any)}
-            >
-              <option value="Todo">Todo</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
             </select>
           </div>
 
